@@ -1,4 +1,4 @@
-namespace SkincareEcommerce.API
+namespace SkincareWebBackend.API
 {
     public class WeatherForecast
     {

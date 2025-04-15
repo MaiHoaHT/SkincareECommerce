@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace SkincareEcommerce.API.Controllers
+namespace SkincareWebBackend.API.Controllers
 {
     [ApiController]
     [Route("[controller]")]

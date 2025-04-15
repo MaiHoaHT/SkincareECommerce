@@ -1,0 +1,6 @@
+@SkincareWebBackend.API_HostAddress = http://localhost:5064
+
+GET {{SkincareWebBackend.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
