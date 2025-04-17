@@ -10,6 +10,7 @@ namespace SkincareWebBackend.API.Data.Entities
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         [Required]
+        [Column(TypeName = "VARCHAR(50)")]
         public string UserId { get; set; }
 
         [Required]
