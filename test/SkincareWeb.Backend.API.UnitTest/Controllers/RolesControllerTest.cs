@@ -182,4 +182,43 @@ public class RolesControllerTests
         var result = await rolesController.DeleteRole("test");
         Assert.IsType<BadRequestObjectResult>(result);
     }
+    [Fact]
+    public async Task PostRole_ValidInput_Failed()
+    {
+        _mockRoleManager.Setup(x => x.CreateAsync(It.IsAny<IdentityRole>()))
+            .ReturnsAsync(IdentityResult.Failed(new IdentityError[] { new IdentityError { Code = "Error", Description = "Failed to create role." } }));
+
+        var rolesController = new RolesController(_mockRoleManager.Object, _context);
+        var result = await rolesController.PostRole(new RoleViewModel { Id = "test", Name = "test" });
+
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.NotNull(badRequestResult.Value);
+    }
+    [Fact]
+    public async Task PutRole_NotFound_Failed()
+    {
+        _mockRoleManager.Setup(x => x.FindByIdAsync(It.IsAny<string>()))
+            .ReturnsAsync((IdentityRole)null);
+
+        var rolesController = new RolesController(_mockRoleManager.Object, _context);
+        var result = await rolesController.PutRole("test", new RoleViewModel { Id = "test", Name = "updatedName" });
+
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
+    public async Task PutRole_ValidInput_Failed()
+    {
+        _mockRoleManager.Setup(x => x.FindByIdAsync(It.IsAny<string>()))
+            .ReturnsAsync(new IdentityRole() { Id = "test", Name = "oldName" });
+
+        _mockRoleManager.Setup(x => x.UpdateAsync(It.IsAny<IdentityRole>()))
+            .ReturnsAsync(IdentityResult.Failed(new IdentityError[] { new IdentityError { Code = "Error", Description = "Failed to update role." } }));
+
+        var rolesController = new RolesController(_mockRoleManager.Object, _context);
+        var result = await rolesController.PutRole("test", new RoleViewModel { Id = "test", Name = "updatedName" });
+
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+
 }
