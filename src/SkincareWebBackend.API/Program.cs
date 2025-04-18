@@ -1,16 +1,29 @@
-﻿var builder = WebApplication.CreateBuilder(args);
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using SkincareWebBackend.API.Data;
+using SkincareWebBackend.API.Data.Entities;
 
-// Add services to the container.
+var builder = WebApplication.CreateBuilder(args);
 
+// 🔹 Kết nối cơ sở dữ liệu
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// 🔹 Đăng ký Identity
+builder.Services.AddIdentity<User, IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>();
+
+// 🔹 Đăng ký dịch vụ khởi tạo dữ liệu
+builder.Services.AddTransient<DataInitalizer>();
+
+// 🔹 Thêm dịch vụ MVC & Swagger
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// 🔹 Cấu hình pipeline cho môi trường dev
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -18,9 +31,26 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
+
+// 🔹 Khởi tạo dữ liệu khi ứng dụng khởi động
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var dataInitializer = services.GetRequiredService<DataInitalizer>();
+    await dataInitializer.Seed();
+    Console.WriteLine("Seed data thành công!");
+
+    try
+    {
+        await dataInitializer.Seed();
+        Console.WriteLine(" Seed data thành công!");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($" Lỗi khi seed data: {ex.Message}");
+    }
+}
 
 app.Run();

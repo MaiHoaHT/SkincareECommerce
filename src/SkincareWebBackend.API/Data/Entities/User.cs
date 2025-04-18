@@ -7,6 +7,21 @@ namespace SkincareWebBackend.API.Data.Entities
 {
     public class User : IdentityUser, IDateTracking
     {
+        public User()
+        {
+        }
+
+        public User(string id, string userName, string firstName, string lastName,
+            string email, string phoneNumber, DateTime dob)
+        {
+            Id = id;
+            UserName = userName;
+            FirstName = firstName;
+            LastName = lastName;
+            Email = email;
+            PhoneNumber = phoneNumber;
+            Dob = dob;
+        }
         [Required]
         [Column(TypeName = "NVARCHAR(255)")]
         public string FirstName { get; set; }

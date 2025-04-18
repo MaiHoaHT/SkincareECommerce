@@ -3,11 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34728.123
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SkincareWebBackend.API", "src\SkincareWebBackend.API\SkincareWebBackend.API.csproj", "{337E078D-5E4D-4C11-A788-90BAC8073F7C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SkincareWebBackend.API", "src\SkincareWebBackend.API\SkincareWebBackend.API.csproj", "{337E078D-5E4D-4C11-A788-90BAC8073F7C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SkincareWeb.CustomerSite", "src\SkincareWeb.CustomerSite\SkincareWeb.CustomerSite.csproj", "{D5AA3DA9-B630-41A2-B1C3-E7AE119DA61A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SkincareWeb.CustomerSite", "src\SkincareWeb.CustomerSite\SkincareWeb.CustomerSite.csproj", "{D5AA3DA9-B630-41A2-B1C3-E7AE119DA61A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SkincareWeb.ViewModels", "src\SkincareWeb.ViewModels\SkincareWeb.ViewModels.csproj", "{BAD2E096-8973-4659-AF2C-10B7BB4A3B26}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SkincareWeb.ViewModels", "src\SkincareWeb.ViewModels\SkincareWeb.ViewModels.csproj", "{BAD2E096-8973-4659-AF2C-10B7BB4A3B26}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{B483FD42-AF6D-4D86-987B-0BEBCC909397}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SkincareWeb.Backend.API.UnitTest", "test\SkincareWeb.Backend.API.UnitTest\SkincareWeb.Backend.API.UnitTest.csproj", "{9E60DD5E-5573-4CCC-A72D-688B967565F0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,9 +31,16 @@ Global
 		{BAD2E096-8973-4659-AF2C-10B7BB4A3B26}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BAD2E096-8973-4659-AF2C-10B7BB4A3B26}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BAD2E096-8973-4659-AF2C-10B7BB4A3B26}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9E60DD5E-5573-4CCC-A72D-688B967565F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9E60DD5E-5573-4CCC-A72D-688B967565F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9E60DD5E-5573-4CCC-A72D-688B967565F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9E60DD5E-5573-4CCC-A72D-688B967565F0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{9E60DD5E-5573-4CCC-A72D-688B967565F0} = {B483FD42-AF6D-4D86-987B-0BEBCC909397}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {94D95F63-12DD-4285-8D9B-683F89B1C8FA}

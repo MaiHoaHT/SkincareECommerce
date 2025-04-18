@@ -11,7 +11,7 @@ namespace SkincareWebBackend.API.Data.Entities
         [Key]
         public string Id { get; set; }
 
-        [MaxLength(50)]
+        [MaxLength(250)]
         [Required]
         public string Name { get; set; }
     }
