@@ -19,6 +19,10 @@ namespace SkincareWebBackend.API.Controllers
         [HttpPost]
         public async Task<IActionResult> PostRole(RoleViewModel roleViewModel)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             var role = new IdentityRole()
             {
                 Id = roleViewModel.Id,
@@ -49,7 +53,7 @@ namespace SkincareWebBackend.API.Controllers
         }
 
         // URL: GET: http://localhost:5001/api/roles?filter={filter}&pageIndex=1&pageSize=10
-        [HttpGet]
+        [HttpGet("filter")]
         public async Task<IActionResult> GetRolesPaging(string filter, int pageIndex, int pageSize)
         {
             var query = _roleManager.Roles;
@@ -95,7 +99,7 @@ namespace SkincareWebBackend.API.Controllers
         }
 
         //url put: http://localhost:7261/api/roles/{id}
-        [HttpGet("{id}")]
+        [HttpPut("{id}")]
         public async Task<IActionResult> PutRole(string id, [FromBody] RoleViewModel roleViewModel)
         {
             if (id != roleViewModel.Id)
