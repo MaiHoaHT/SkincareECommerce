@@ -19,10 +19,6 @@ namespace SkincareWebBackend.API.Controllers
         [HttpPost]
         public async Task<IActionResult> PostRole(RoleViewModel roleViewModel)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
             var role = new IdentityRole()
             {
                 Id = roleViewModel.Id,

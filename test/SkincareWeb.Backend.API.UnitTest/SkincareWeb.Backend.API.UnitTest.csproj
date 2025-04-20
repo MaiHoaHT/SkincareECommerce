@@ -11,7 +11,6 @@
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.0" />
-    <PackageReference Include="Microsoft.AspNet.Identity.EntityFramework" Version="2.2.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.4" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
     <PackageReference Include="MockQueryable.Moq" Version="7.0.3" />
@@ -21,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\SkincareWebBackend.API\SkincareWebBackend.API.csproj" />
+    <ProjectReference Include="..\..\src\SkincareWebBackend.API\SkincareWeb.BackendServer.csproj" />
   </ItemGroup>
 
   <ItemGroup>
