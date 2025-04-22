@@ -40,7 +40,31 @@ namespace SkincareWebBackend.IdentityServer
                         IdentityServerConstants.StandardScopes.OfflineAccess,
                         "api.skincare"
                     }
+                },
+                new Client
+                {
+                    ClientId = "swagger_client",
+                    ClientName = "Swagger Client",
+
+                    AllowedGrantTypes = GrantTypes.Code,
+                    RequirePkce = true,
+                    RequireClientSecret = false,
+
+                    RedirectUris =           { "https://localhost:7261/swagger/oauth2-redirect.html" },
+                    PostLogoutRedirectUris = { "https://localhost:7261/swagger/oauth2-redirect.html" },
+                    AllowedCorsOrigins =     { "https://localhost:7261" },
+
+                    AllowedScopes = new List<string>
+                    {
+                        IdentityServerConstants.StandardScopes.OpenId,
+                        IdentityServerConstants.StandardScopes.Profile,
+                        "api.skincare"
+                    }
                 }
+
+
+
             ];
+
     }
 }

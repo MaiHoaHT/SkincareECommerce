@@ -189,7 +189,7 @@ public class RolesControllerTests
             .ReturnsAsync(IdentityResult.Failed(new IdentityError[] { new IdentityError { Code = "Error", Description = "Failed to create role." } }));
 
         var rolesController = new RolesController(_mockRoleManager.Object, _context);
-        var result = await rolesController.PostRole(new RoleViewModel { Id = "test", Name = "test" });
+        var result = await rolesController.PostRole(new RoleCreateRequest { Id = "test", Name = "test" });
 
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
         Assert.NotNull(badRequestResult.Value);
@@ -201,7 +201,7 @@ public class RolesControllerTests
             .ReturnsAsync((IdentityRole)null);
 
         var rolesController = new RolesController(_mockRoleManager.Object, _context);
-        var result = await rolesController.PutRole("test", new RoleViewModel { Id = "test", Name = "updatedName" });
+        var result = await rolesController.PutRole("test", new RoleCreateRequest { Id = "test", Name = "updatedName" });
 
         Assert.IsType<NotFoundResult>(result);
     }
@@ -216,7 +216,7 @@ public class RolesControllerTests
             .ReturnsAsync(IdentityResult.Failed(new IdentityError[] { new IdentityError { Code = "Error", Description = "Failed to update role." } }));
 
         var rolesController = new RolesController(_mockRoleManager.Object, _context);
-        var result = await rolesController.PutRole("test", new RoleViewModel { Id = "test", Name = "updatedName" });
+        var result = await rolesController.PutRole("test", new RoleCreateRequest { Id = "test", Name = "updatedName" });
 
         Assert.IsType<BadRequestObjectResult>(result);
     }

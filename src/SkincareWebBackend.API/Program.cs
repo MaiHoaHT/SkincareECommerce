@@ -1,9 +1,8 @@
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
-using SkincareWeb.BackendServer.Service;
+using Microsoft.OpenApi.Models;
 using SkincareWeb.ViewModels.Systems;
 using SkincareWebBackend.API.Data;
 using SkincareWebBackend.API.Data.Entities;
@@ -60,22 +59,62 @@ builder.Services.AddAuthorization(options =>
     });
 });
 
-// 🔹 Đăng ký dịch vụ MVC, Razor Pages & Swagger
+// 🔹 Đăng ký dịch vụ MVC, Razor Pages & Swagger với OAuth2
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddMvc();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.OAuth2,
+        Flows = new OpenApiOAuthFlows
+        {
+            AuthorizationCode = new OpenApiOAuthFlow
+            {
+                AuthorizationUrl = new Uri(builder.Configuration["IdentityServer:Authority"] + "/connect/authorize"),
+                TokenUrl = new Uri(builder.Configuration["IdentityServer:Authority"] + "/connect/token"),
+                Scopes = new Dictionary<string, string> { { "api.skincare", "Skincare API" } }
+            }
+        }
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            new List<string>{ "api.skincare" }
+        }
+    });
+});
+builder.Services.AddRazorPages(options =>
+{
+    options.Conventions.AddAreaFolderRouteModelConvention("Identity", "/Account/", model =>
+    {
+        foreach (var selector in model.Selectors)
+        {
+            var attributeRouteModel = selector.AttributeRouteModel;
+            attributeRouteModel.Order = -1;
+            if (attributeRouteModel.Template.StartsWith("Identity"))
+            {
+                attributeRouteModel.Template = attributeRouteModel.Template.Remove(0, "Identity".Length);
+            }
+        }
+    });
+});
 
 // 🔹 Đăng ký dịch vụ FluentValidation
 builder.Services.AddValidatorsFromAssemblyContaining<RoleViewModelValidation>();
+//builder.Services.AddValidatorsFromAssemblyContaining<UserCreateRequestValidation>();
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddFluentValidationClientsideAdapters();
+builder.Services.AddRazorPages();
+
 
 // 🔹 Đăng ký Data Seeding
 builder.Services.AddTransient<DataInitalizer>();
-builder.Services.AddTransient<IEmailSender, EmailSenderService>();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
@@ -85,15 +124,20 @@ app.UseAuthentication();
 app.UseIdentityServer();
 app.UseAuthorization();
 app.MapControllers();
-//app.MapControllerRoute(
-//    name: "default",
-//    pattern: "{controller=Home}/{action=Index}/{id?}");
-app.MapDefaultControllerRoute();
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages(); // 👈 Kích hoạt giao diện đăng nhập
+
+// 🔹 Kích hoạt Swagger UI với OAuth2
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.OAuthClientId("swagger_client");
+        options.OAuthUsePkce();
+    });
 }
 
 // 🔹 Khởi tạo dữ liệu khi ứng dụng khởi động

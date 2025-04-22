@@ -1,34 +1,36 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using SkincareWeb.BackendServer.Controllers;
 using SkincareWeb.ViewModels.Systems;
+using SkincareWebBackend.API.Data;
 
 namespace SkincareWebBackend.API.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class RolesController : ControllerBase
+    public class RolesController : BaseController
     {
         private readonly RoleManager<IdentityRole> _roleManager;
-        public RolesController(RoleManager<IdentityRole> roleManager, Data.ApplicationDbContext _context)
+        private readonly ApplicationDbContext _context;
+        public RolesController(RoleManager<IdentityRole> roleManager, ApplicationDbContext context)
         {
             _roleManager = roleManager;
+            _context = context;
         }
 
         // url post: http://localhost:7261/api/roles
         [HttpPost]
-        public async Task<IActionResult> PostRole(RoleViewModel roleViewModel)
+        public async Task<IActionResult> PostRole(RoleCreateRequest request)
         {
             var role = new IdentityRole()
             {
-                Id = roleViewModel.Id,
-                Name = roleViewModel.Name,
-                NormalizedName = roleViewModel.Name.ToUpper()
+                Id = request.Id,
+                Name = request.Name,
+                NormalizedName = request.Name.ToUpper()
             };
             var result = await _roleManager.CreateAsync(role);
             if (result.Succeeded)
             {
-                return CreatedAtAction(nameof(GetById), new { Id = role.Id }, roleViewModel);
+                return CreatedAtAction(nameof(GetById), new { Id = role.Id }, request);
             }
             else
             {
@@ -96,9 +98,9 @@ namespace SkincareWebBackend.API.Controllers
 
         //url put: http://localhost:7261/api/roles/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutRole(string id, [FromBody] RoleViewModel roleViewModel)
+        public async Task<IActionResult> PutRole(string id, [FromBody] RoleCreateRequest request)
         {
-            if (id != roleViewModel.Id)
+            if (id != request.Id)
             {
                 return BadRequest();
             }
@@ -107,8 +109,8 @@ namespace SkincareWebBackend.API.Controllers
             {
                 return NotFound();
             }
-            role.Name = roleViewModel.Name;
-            role.NormalizedName = roleViewModel.Name.ToUpper();
+            role.Name = request.Name;
+            role.NormalizedName = request.Name.ToUpper();
 
             var result = await _roleManager.UpdateAsync(role);
             if (result.Succeeded) { return NoContent(); }
