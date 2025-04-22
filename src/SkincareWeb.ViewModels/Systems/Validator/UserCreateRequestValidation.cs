@@ -1,6 +1,6 @@
 ﻿using FluentValidation;
 
-namespace SkincareWeb.ViewModels.Systems
+namespace SkincareWeb.ViewModels.Systems.Validator
 {
     public class UserCreateRequestValidation : AbstractValidator<UserCreateRequest>
     {

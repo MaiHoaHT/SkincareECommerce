@@ -1,9 +1,11 @@
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using SkincareWeb.ViewModels.Systems;
+using SkincareWeb.BackendServer.Service;
+using SkincareWeb.ViewModels.Systems.Validator;
 using SkincareWebBackend.API.Data;
 using SkincareWebBackend.API.Data.Entities;
 using SkincareWebBackend.IdentityServer;
@@ -105,7 +107,7 @@ builder.Services.AddRazorPages(options =>
     });
 });
 
-// 🔹 Đăng ký dịch vụ FluentValidation
+// Đăng ký dịch vụ FluentValidation
 builder.Services.AddValidatorsFromAssemblyContaining<RoleViewModelValidation>();
 //builder.Services.AddValidatorsFromAssemblyContaining<UserCreateRequestValidation>();
 builder.Services.AddFluentValidationAutoValidation();
@@ -113,9 +115,9 @@ builder.Services.AddFluentValidationClientsideAdapters();
 builder.Services.AddRazorPages();
 
 
-// 🔹 Đăng ký Data Seeding
+// Đăng ký Service Data seed và Email
 builder.Services.AddTransient<DataInitalizer>();
-
+builder.Services.AddTransient<IEmailSender, EmailSenderService>();
 var app = builder.Build();
 
 // 🔹 Cấu hình middleware (.NET 8)

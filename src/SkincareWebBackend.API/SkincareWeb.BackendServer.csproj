@@ -102,6 +102,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="Duende.IdentityServer" Version="7.2.1" />
     <PackageReference Include="Duende.IdentityServer.AspNetIdentity" Version="7.2.1" />
     <PackageReference Include="EntityFramework" Version="6.5.1" />
