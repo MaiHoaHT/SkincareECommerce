@@ -7,7 +7,6 @@ namespace SkincareWebBackend.API.Data.Entities
     [Table("Products")]
     public class Product : IDateTracking
     {
-        // Thiếu dung tích và type skin
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
@@ -51,6 +50,6 @@ namespace SkincareWebBackend.API.Data.Entities
         public bool IsActive { get; set; }
         public DateTime CreateDate { get; set; }
         public DateTime LastModifiedDate { get; set; }
-        public DateTime DeleteDate { get; set; }
+        public DateTime? DeleteDate { get; set; }
     }
 }

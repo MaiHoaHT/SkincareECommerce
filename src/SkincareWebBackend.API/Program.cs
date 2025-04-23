@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using SkincareWeb.BackendServer.Service;
-using SkincareWeb.ViewModels.Systems.Validator;
+using SkincareWeb.ViewModels.Systems;
 using SkincareWebBackend.API.Data;
 using SkincareWebBackend.API.Data.Entities;
 using SkincareWebBackend.IdentityServer;

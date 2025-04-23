@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SkincareWeb.BackendServer.Controllers;
+using SkincareWeb.BackendServer.Helpers;
 using SkincareWeb.ViewModels.Systems;
 using SkincareWebBackend.API.Data;
 using SkincareWebBackend.API.Data.Entities;
@@ -35,7 +36,7 @@ namespace SkincareWebBackend.API.Controllers
                 PhoneNumber = request.PhoneNumber,
                 CreateDate = DateTime.Now,
             };
-            var result = await _userManager.CreateAsync(user);
+            var result = await _userManager.CreateAsync(user, request.Password);
             if (result.Succeeded)
             {
                 return CreatedAtAction(nameof(GetById), new { Id = user.Id }, request);
@@ -129,9 +130,8 @@ namespace SkincareWebBackend.API.Controllers
         {
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
-            {
-                return NotFound();
-            }
+                return NotFound(new ApiNotFoundResponse($"Cannot found user with id: {id}"));
+
             user.FirstName = request.FirstName;
             user.LastName = request.LastName;
             user.Dob = DateTime.Parse(request.Dob);
@@ -143,7 +143,24 @@ namespace SkincareWebBackend.API.Controllers
             {
                 return NoContent();
             }
-            return BadRequest(result.Errors);
+            return BadRequest(new ApiBadRequestResponse(result));
+        }
+
+        //url put: http://localhost:7261/api/users/{id}
+        [HttpPut("{id}/change-password")]
+        public async Task<IActionResult> PutChangePasswordUser(string id, [FromBody] UserChangePasswordRequest request)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+                return NotFound(new ApiNotFoundResponse($"Cannot found user with id: {id}"));
+
+            var result = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+
+            if (result.Succeeded)
+            {
+                return NoContent();
+            }
+            return BadRequest(new ApiBadRequestResponse(result));
         }
 
         //url delete: http://localhost:7261/api/users/{id}
@@ -171,7 +188,7 @@ namespace SkincareWebBackend.API.Controllers
                 };
                 return Ok(userViewModel);
             }
-            return BadRequest(result.Errors);
+            return BadRequest(new ApiBadRequestResponse(result));
         }
 
         [HttpGet("{userId}/menu")]

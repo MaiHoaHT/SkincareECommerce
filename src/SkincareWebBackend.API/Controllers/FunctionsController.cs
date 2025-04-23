@@ -270,7 +270,6 @@ namespace SkincareWeb.BackendServer.Controllers
             }
 
             var result = await _context.SaveChangesAsync();
-
             if (result > 0)
             {
                 return Ok();
