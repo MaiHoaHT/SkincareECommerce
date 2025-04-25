@@ -1,5 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using SkincareWeb.BackendServer.Helpers;
+using SkincareWeb.BackendServer.Services;
+using SkincareWeb.ViewModels.Cosmetics;
+using SkincareWeb.ViewModels.Systems;
 using SkincareWebBackend.API.Data;
 using SkincareWebBackend.API.Data.Entities;
 
@@ -8,94 +13,155 @@ namespace SkincareWeb.BackendServer.Controllers
     public class CategoriesController : BaseController
     {
         private readonly ApplicationDbContext _context;
+        private readonly ICacheService _cacheService;
 
-        public CategoriesController(ApplicationDbContext context)
+        public CategoriesController(ApplicationDbContext context,
+            ICacheService cacheService)
         {
             _context = context;
+            _cacheService = cacheService;
         }
 
-        // GET: api/Categories
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Category>>> GetCategories()
+        [HttpPost]
+        public async Task<IActionResult> PostCategory([FromBody] CategoryCreateRequest request)
         {
-            return await _context.Categories.ToListAsync();
+            var category = new Category()
+            {
+                Name = request.Name,
+                Banner = request.Banner,
+                SeoAlias = request.SeoAlias,
+                SeoDescription = request.SeoDescription,
+                SortOrder = request.SortOrder,
+                ParentId = request.ParentId,
+            };
+            _context.Categories.Add(category);
+            var result = await _context.SaveChangesAsync();
+
+            if (result > 0)
+            {
+                await _cacheService.RemoveAsync("Categories");
+
+                return CreatedAtAction(nameof(GetById), new { id = category.Id }, request);
+            }
+            else
+            {
+                return BadRequest(new ApiBadRequestResponse("Create category failed"));
+            }
         }
 
-        // GET: api/Categories/5
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetCategories()
+        {
+            var cachedData = await _cacheService.GetAsync<List<CategoryViewModel>>("Categories");
+            if (cachedData == null)
+            {
+                var categorys = await _context.Categories.ToListAsync();
+
+                var categoryVms = categorys.Select(c => CreateCategoryViewModel(c)).ToList();
+                await _cacheService.SetAsync("Categories", categoryVms);
+                cachedData = categoryVms;
+            }
+
+            return Ok(cachedData);
+        }
+
+        [HttpGet("filter")]
+        public async Task<IActionResult> GetCategoriesPaging(string filter, int pageIndex, int pageSize)
+        {
+            var query = _context.Categories.AsQueryable();
+            if (!string.IsNullOrEmpty(filter))
+            {
+                query = query.Where(x => x.Name.Contains(filter)
+                || x.Name.Contains(filter));
+            }
+            var totalRecords = await query.CountAsync();
+            var items = await query.Skip((pageIndex - 1) * pageSize)
+                .Take(pageSize).ToListAsync();
+
+            var data = items.Select(c => CreateCategoryViewModel(c)).ToList();
+
+            var pagination = new Pagination<CategoryViewModel>
+            {
+                Items = data,
+                TotalRecords = totalRecords,
+            };
+            return Ok(pagination);
+        }
+
         [HttpGet("{id}")]
-        public async Task<ActionResult<Category>> GetCategory(int id)
+        [AllowAnonymous]
+        public async Task<IActionResult> GetById(int id)
         {
             var category = await _context.Categories.FindAsync(id);
-
             if (category == null)
-            {
-                return NotFound();
-            }
+                return NotFound(new ApiNotFoundResponse($"Category with id: {id} is not found"));
 
-            return category;
+            CategoryViewModel categoryvm = CreateCategoryViewModel(category);
+
+            return Ok(categoryvm);
         }
 
-        // PUT: api/Categories/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCategory(int id, Category category)
+        public async Task<IActionResult> PutCategory(int id, [FromBody] CategoryCreateRequest request)
         {
-            if (id != category.Id)
+            var category = await _context.Categories.FindAsync(id);
+            if (category == null)
+                return NotFound(new ApiNotFoundResponse($"Category with id: {id} is not found"));
+
+            if (id == request.ParentId)
             {
-                return BadRequest();
+                return BadRequest(new ApiBadRequestResponse("Category cannot be a child itself."));
             }
 
-            _context.Entry(category).State = EntityState.Modified;
+            category.Name = request.Name;
+            category.ParentId = request.ParentId;
+            category.SortOrder = request.SortOrder;
+            category.SeoDescription = request.SeoDescription;
+            category.SeoAlias = request.SeoAlias;
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CategoryExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            _context.Categories.Update(category);
+            var result = await _context.SaveChangesAsync();
 
-            return NoContent();
+            if (result > 0)
+            {
+                await _cacheService.RemoveAsync("Categories");
+
+                return NoContent();
+            }
+            return BadRequest(new ApiBadRequestResponse("Update category failed"));
         }
 
-        // POST: api/Categories
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Category>> PostCategory(Category category)
-        {
-            _context.Categories.Add(category);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetCategory", new { id = category.Id }, category);
-        }
-
-        // DELETE: api/Categories/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory(int id)
         {
             var category = await _context.Categories.FindAsync(id);
             if (category == null)
-            {
-                return NotFound();
-            }
+                return NotFound(new ApiNotFoundResponse($"Category with id: {id} is not found"));
 
             _context.Categories.Remove(category);
-            await _context.SaveChangesAsync();
+            var result = await _context.SaveChangesAsync();
+            if (result > 0)
+            {
+                await _cacheService.RemoveAsync("Categories");
 
-            return NoContent();
+                CategoryViewModel categoryvm = CreateCategoryViewModel(category);
+                return Ok(categoryvm);
+            }
+            return BadRequest();
         }
 
-        private bool CategoryExists(int id)
+        private static CategoryViewModel CreateCategoryViewModel(Category category)
         {
-            return _context.Categories.Any(e => e.Id == id);
+            return new CategoryViewModel()
+            {
+                Id = category.Id,
+                Name = category.Name,
+                SortOrder = category.SortOrder,
+                ParentId = category.ParentId,
+                SeoDescription = category.SeoDescription,
+                SeoAlias = category.SeoAlias
+            };
         }
     }
 }
