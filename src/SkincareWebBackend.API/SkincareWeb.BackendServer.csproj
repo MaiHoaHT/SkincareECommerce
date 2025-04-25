@@ -105,7 +105,6 @@
     <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="Duende.IdentityServer" Version="7.2.1" />
     <PackageReference Include="Duende.IdentityServer.AspNetIdentity" Version="7.2.1" />
-    <PackageReference Include="EntityFramework" Version="6.5.1" />
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.15" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.15" />

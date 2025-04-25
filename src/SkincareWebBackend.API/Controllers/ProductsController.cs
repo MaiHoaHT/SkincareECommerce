@@ -19,28 +19,16 @@ namespace SkincareWeb.BackendServer.Controllers
         [HttpGet]
         public async Task<IActionResult> GetProducts()
         {
-            var products = _context.Products;
-            var productViewModels = await products.Select(p => new ProductViewModel()
+            var productQuickViewModel = await _context.Products.AsQueryable().Select(p => new ProductQuickViewModel()
             {
                 Name = p.Name,
-                Description = p.Description,
                 Price = p.Price,
                 Discount = p.Discount,
                 ImageUrl = p.ImageUrl,
-                CategoryId = p.CategoryId,
-                BrandId = p.BrandId,
-                SeoAlias = p.SeoAlias,
-                Quantity = p.Quantity,
-                Sold = p.Sold,
-                Status = p.Status,
                 IsFeature = p.IsFeature,
-                IsHome = p.IsHome,
                 IsHot = p.IsHot,
-                IsActive = p.IsActive,
-                CreateDate = p.CreateDate,
-                LastModifiedDate = p.LastModifiedDate
             }).ToListAsync();
-            return Ok(productViewModels);
+            return Ok(productQuickViewModel);
         }
 
         // url get: http://localhost:7261/api/products/1

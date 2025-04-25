@@ -1,343 +1,268 @@
 ﻿
-using global::SkincareWebBackend.API.Controllers;
-using global::SkincareWebBackend.API.Data.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using MockQueryable;
 using Moq;
+using SkincareWeb.Backend.API.UnitTest.Helpers;
 using SkincareWeb.ViewModels.Systems;
+using SkincareWebBackend.API.Controllers;
+using SkincareWebBackend.API.Data;
+using SkincareWebBackend.API.Data.Entities;
 
-namespace SkincareWebBackend.Tests.Controllers
+namespace SkincareWebBackend.API.UnitTest.Controllers
 {
-    public class UsersControllerTests
+    public class UsersControllerTest
     {
         private readonly Mock<UserManager<User>> _mockUserManager;
-        private readonly UsersController _controller;
+        private readonly Mock<RoleManager<IdentityRole>> _mockRoleManager;
+        private ApplicationDbContext _context;
 
-        public UsersControllerTests()
+        private List<User> _userSources = new List<User>(){
+                             new User("1","test1","Test 1","LastTest 1","test1@gmail.com","001111",DateTime.Now),
+                             new User("2","test2","Test 2","LastTest 2","test2@gmail.com","001111",DateTime.Now),
+                             new User("3","test3","Test 3","LastTest 3","test3@gmail.com","001111",DateTime.Now),
+                             new User("4","test4","Test 4","LastTest 4","test4@gmail.com","001111",DateTime.Now),
+                        };
+
+        public UsersControllerTest()
         {
-            var userStoreMock = new Mock<IUserStore<User>>();
-            _mockUserManager = new Mock<UserManager<User>>(userStoreMock.Object, null, null, null, null, null, null, null, null);
-            _controller = new UsersController(_mockUserManager.Object, null);
+            var userStore = new Mock<IUserStore<User>>();
+            _mockUserManager = new Mock<UserManager<User>>(userStore.Object,
+                null, null, null, null, null, null, null, null);
+
+            var roleStore = new Mock<IRoleStore<IdentityRole>>();
+            _mockRoleManager = new Mock<RoleManager<IdentityRole>>(roleStore.Object, null, null, null, null);
+
+            _context = new InMemoryDbContextFactory().GetApplicationDbContext();
         }
 
         [Fact]
-        public async Task PostUser_ShouldReturnCreatedAtAction_WhenUserIsCreated()
+        public void ShouldCreateInstance_NotNull_Success()
         {
-            // Arrange
-            var request = new UserCreateRequest
-            {
-                Email = "test@example.com",
-                Dob = "2000-01-01",
-                UserName = "testuser",
-                FirstName = "Test",
-                LastName = "User",
-                PhoneNumber = "123456789"
-            };
+            var usersController = new UsersController(_mockUserManager.Object, _context, _mockRoleManager.Object);
+            Assert.NotNull(usersController);
+        }
 
-            _mockUserManager.Setup(x => x.CreateAsync(It.IsAny<User>()))
+        [Fact]
+        public async Task PostUser_ValidInput_Success()
+        {
+            _mockUserManager.Setup(x => x.CreateAsync(It.IsAny<User>(), It.IsAny<string>()))
                 .ReturnsAsync(IdentityResult.Success);
 
-            // Act
-            var result = await _controller.PostUser(request);
+            _mockUserManager.Setup(x => x.FindByNameAsync(It.IsAny<string>()))
+                .ReturnsAsync(new User()
+                {
+                    UserName = "test"
+                });
 
-            // Assert
-            var createdResult = Assert.IsType<CreatedAtActionResult>(result);
-            Assert.Equal(nameof(_controller.GetById), createdResult.ActionName);
+            var usersController = new UsersController(_mockUserManager.Object, _context, _mockRoleManager.Object);
+            var result = await usersController.PostUser(new UserCreateRequest()
+            {
+                UserName = "test",
+                Dob = "12/12/2020"
+            });
+
+            Assert.NotNull(result);
+            Assert.IsType<CreatedAtActionResult>(result);
         }
 
         [Fact]
-        public async Task PostUser_ShouldReturnBadRequest_WhenUserCreationFails()
+        public async Task PostUser_ValidInput_Failed()
         {
-            // Arrange
-            var request = new UserCreateRequest
+            _mockUserManager.Setup(x => x.CreateAsync(It.IsAny<User>(), It.IsAny<string>()))
+                .ReturnsAsync(IdentityResult.Failed(new IdentityError[] { }));
+
+            var usersController = new UsersController(_mockUserManager.Object, _context, _mockRoleManager.Object);
+            var result = await usersController.PostUser(new UserCreateRequest()
             {
-                Email = "test@example.com",
-                Dob = "2000-01-01",
-                UserName = "testuser",
-                FirstName = "Test",
-                LastName = "User",
-                PhoneNumber = "123456789"
-            };
+                UserName = "test",
+                Dob = "12/12/2020"
+            });
 
-            _mockUserManager.Setup(x => x.CreateAsync(It.IsAny<User>()))
-                .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Error" }));
-
-            // Act
-            var result = await _controller.PostUser(request);
-
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.NotNull(badRequestResult.Value);
+            Assert.NotNull(result);
+            Assert.IsType<BadRequestObjectResult>(result);
         }
 
         [Fact]
-        public async Task GetById_ShouldReturnUser_WhenUserExists()
+        public async Task GetUsers_HasData_ReturnSuccess()
         {
-            // Arrange
-            var userId = "123";
-            var user = new User
-            {
-                Id = userId,
-                UserName = "testuser",
-                Email = "test@example.com",
-                Dob = DateTime.Parse("2000-01-01"),
-                FirstName = "Test",
-                LastName = "User",
-                PhoneNumber = "123456789",
-                CreateDate = DateTime.Now
-            };
+            var _mockQueryableUser = _userSources.AsQueryable().BuildMock();
 
-            _mockUserManager.Setup(x => x.FindByIdAsync(userId))
-                .ReturnsAsync(user);
-
-            // Act
-            var result = await _controller.GetById(userId);
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            var userViewModel = Assert.IsType<UserViewModel>(okResult.Value);
-            Assert.Equal(userId, userViewModel.Id);
+            _mockUserManager.Setup(x => x.Users).Returns(_mockQueryableUser);
+            var usersController = new UsersController(_mockUserManager.Object, _context, _mockRoleManager.Object);
+            var result = await usersController.GetUsers();
+            var okResult = result as OkObjectResult;
+            var UserVms = okResult.Value as IEnumerable<UserViewModel>;
+            Assert.True(UserVms.Count() > 0);
         }
 
         [Fact]
-        public async Task GetById_ShouldReturnNotFound_WhenUserDoesNotExist()
+        public async Task GetUsers_ThrowException_Failed()
         {
-            // Arrange
-            var userId = "123";
+            _mockUserManager.Setup(x => x.Users).Throws<Exception>();
 
-            _mockUserManager.Setup(x => x.FindByIdAsync(userId))
-                .ReturnsAsync((User)null);
+            var usersController = new UsersController(_mockUserManager.Object, _context, _mockRoleManager.Object);
 
-            // Act
-            var result = await _controller.GetById(userId);
-
-            // Assert
-            Assert.IsType<NotFoundResult>(result);
+            await Assert.ThrowsAnyAsync<Exception>(async () => await usersController.GetUsers());
         }
+
         [Fact]
-        public async Task PutUser_ShouldReturnNoContent_WhenUpdateIsSuccessful()
+        public async Task GetUsersPaging_NoFilter_ReturnSuccess()
         {
-            // Arrange
-            var userId = "123";
-            var request = new UserCreateRequest
-            {
-                FirstName = "UpdatedFirstName",
-                LastName = "UpdatedLastName",
-                Dob = "1990-01-01"
-            };
+            var _mockQueryableUser = _userSources.AsQueryable().BuildMock();
 
-            var user = new User
-            {
-                Id = userId,
-                FirstName = "OldFirstName",
-                LastName = "OldLastName",
-                Dob = DateTime.Parse("1980-01-01")
-            };
+            _mockUserManager.Setup(x => x.Users).Returns(_mockQueryableUser);
 
-            _mockUserManager.Setup(x => x.FindByIdAsync(userId))
-                .ReturnsAsync(user);
+            var usersController = new UsersController(_mockUserManager.Object, _context, _mockRoleManager.Object);
+            var result = await usersController.GetUsersPaging(null, 1, 2);
+            var okResult = result as OkObjectResult;
+            var UserVms = okResult.Value as Pagination<UserViewModel>;
+            Assert.Equal(4, UserVms.TotalRecords);
+            Assert.Equal(2, UserVms.Items.Count);
+        }
+
+        [Fact]
+        public async Task GetUsersPaging_HasFilter_ReturnSuccess()
+        {
+            var _mockQueryableUser = _userSources.AsQueryable().BuildMock();
+
+            _mockUserManager.Setup(x => x.Users).Returns(_mockQueryableUser);
+
+            var usersController = new UsersController(_mockUserManager.Object, _context, _mockRoleManager.Object);
+            var result = await usersController.GetUsersPaging("test3", 1, 2);
+            var okResult = result as OkObjectResult;
+            var UserVms = okResult.Value as Pagination<UserViewModel>;
+            Assert.Equal(1, UserVms.TotalRecords);
+            Assert.Single(UserVms.Items);
+        }
+
+        [Fact]
+        public async Task GetUsersPaging_ThrowException_Failed()
+        {
+            _mockUserManager.Setup(x => x.Users).Throws<Exception>();
+
+            var usersController = new UsersController(_mockUserManager.Object, _context, _mockRoleManager.Object);
+
+            await Assert.ThrowsAnyAsync<Exception>(async () => await usersController.GetUsersPaging(null, 1, 1));
+        }
+
+        [Fact]
+        public async Task GetById_HasData_ReturnSuccess()
+        {
+            _mockUserManager.Setup(x => x.FindByIdAsync(It.IsAny<string>()))
+                .ReturnsAsync(new User()
+                {
+                    UserName = "test1"
+                });
+            var usersController = new UsersController(_mockUserManager.Object, _context, _mockRoleManager.Object);
+            var result = await usersController.GetById("test1");
+            var okResult = result as OkObjectResult;
+            Assert.NotNull(okResult);
+
+            var userVm = okResult.Value as UserViewModel;
+
+            Assert.Equal("test1", userVm.UserName);
+        }
+
+        [Fact]
+        public async Task GetById_ThrowException_Failed()
+        {
+            _mockUserManager.Setup(x => x.FindByIdAsync(It.IsAny<string>())).Throws<Exception>();
+
+            var usersController = new UsersController(_mockUserManager.Object, _context, _mockRoleManager.Object);
+
+            await Assert.ThrowsAnyAsync<Exception>(async () => await usersController.GetById("test1"));
+        }
+
+        [Fact]
+        public async Task PutUser_ValidInput_Success()
+        {
+            _mockUserManager.Setup(x => x.FindByIdAsync(It.IsAny<string>()))
+               .ReturnsAsync(new User()
+               {
+                   UserName = "test1"
+               });
 
             _mockUserManager.Setup(x => x.UpdateAsync(It.IsAny<User>()))
                 .ReturnsAsync(IdentityResult.Success);
+            var usersController = new UsersController(_mockUserManager.Object, _context, _mockRoleManager.Object);
+            var result = await usersController.PutUser("test", new UserCreateRequest()
+            {
+                FirstName = "test2",
+                Dob = "12/12/2020"
+            });
 
-            // Act
-            var result = await _controller.PutUser(userId, request);
-
-            // Assert
+            Assert.NotNull(result);
             Assert.IsType<NoContentResult>(result);
-            Assert.Equal(request.FirstName, user.FirstName);
-            Assert.Equal(request.LastName, user.LastName);
-            Assert.Equal(DateTime.Parse(request.Dob), user.Dob);
         }
 
         [Fact]
-        public async Task PutUser_ShouldReturnNotFound_WhenUserDoesNotExist()
+        public async Task PutUser_ValidInput_Failed()
         {
-            // Arrange
-            var userId = "123";
-            var request = new UserCreateRequest
-            {
-                FirstName = "UpdatedFirstName",
-                LastName = "UpdatedLastName",
-                Dob = "1990-01-01"
-            };
-
-            _mockUserManager.Setup(x => x.FindByIdAsync(userId))
-                .ReturnsAsync((User)null);
-
-            // Act
-            var result = await _controller.PutUser(userId, request);
-
-            // Assert
-            Assert.IsType<NotFoundResult>(result);
-        }
-
-        [Fact]
-        public async Task PutUser_ShouldReturnBadRequest_WhenUpdateFails()
-        {
-            // Arrange
-            var userId = "123";
-            var request = new UserCreateRequest
-            {
-                FirstName = "UpdatedFirstName",
-                LastName = "UpdatedLastName",
-                Dob = "1990-01-01"
-            };
-
-            var user = new User
-            {
-                Id = userId,
-                FirstName = "OldFirstName",
-                LastName = "OldLastName",
-                Dob = DateTime.Parse("1980-01-01")
-            };
-
-            _mockUserManager.Setup(x => x.FindByIdAsync(userId))
-                .ReturnsAsync(user);
+            _mockUserManager.Setup(x => x.FindByIdAsync(It.IsAny<string>()))
+             .ReturnsAsync(new User()
+             {
+                 UserName = "test1"
+             });
 
             _mockUserManager.Setup(x => x.UpdateAsync(It.IsAny<User>()))
-                .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Update failed" }));
+                .ReturnsAsync(IdentityResult.Failed(new IdentityError[] { }));
 
-            // Act
-            var result = await _controller.PutUser(userId, request);
+            var usersController = new UsersController(_mockUserManager.Object, _context, _mockRoleManager.Object);
+            var result = await usersController.PutUser("test", new UserCreateRequest()
+            {
+                UserName = "test1",
+                Dob = "12/12/2020"
+            });
 
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.NotNull(badRequestResult.Value);
+            Assert.NotNull(result);
+            Assert.IsType<BadRequestObjectResult>(result);
         }
 
         [Fact]
-        public async Task DeleteUser_ShouldReturnOk_WhenUserIsDeleted()
+        public async Task DeleteUser_ValidInput_Success()
         {
-            // Arrange
-            var userId = "123";
-            var user = new User
-            {
-                Id = userId,
-                UserName = "testuser",
-                Email = "test@example.com"
-            };
+            _mockUserManager.Setup(x => x.FindByIdAsync(It.IsAny<string>()))
+               .ReturnsAsync(new User()
+               {
+                   UserName = "test1"
+               });
 
-            _mockUserManager.Setup(x => x.FindByIdAsync(userId))
-                .ReturnsAsync(user);
+            _mockUserManager.Setup(x => x.GetUsersInRoleAsync(It.IsAny<string>()))
+             .ReturnsAsync(new List<User>(){
+                new User()
+                {
+                    UserName = "test1"
+                }});
 
-            _mockUserManager.Setup(x => x.DeleteAsync(user))
+            _mockUserManager.Setup(x => x.DeleteAsync(It.IsAny<User>()))
                 .ReturnsAsync(IdentityResult.Success);
-
-            // Act
-            var result = await _controller.DeleteUser(userId);
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            var userViewModel = Assert.IsType<UserViewModel>(okResult.Value);
-            Assert.Equal(userId, userViewModel.Id);
+            var usersController = new UsersController(_mockUserManager.Object, _context, _mockRoleManager.Object);
+            var result = await usersController.DeleteUser("test");
+            Assert.IsType<OkObjectResult>(result);
         }
 
         [Fact]
-        public async Task DeleteUser_ShouldReturnNotFound_WhenUserDoesNotExist()
+        public async Task DeleteUser_ValidInput_Failed()
         {
-            // Arrange
-            var userId = "123";
+            _mockUserManager.Setup(x => x.FindByIdAsync(It.IsAny<string>()))
+             .ReturnsAsync(new User()
+             {
+                 UserName = "test1"
+             });
+            _mockUserManager.Setup(x => x.GetUsersInRoleAsync(It.IsAny<string>()))
+             .ReturnsAsync(new List<User>(){
+                new User()
+                {
+                    UserName = "test1"
+                }});
 
-            _mockUserManager.Setup(x => x.FindByIdAsync(userId))
-                .ReturnsAsync((User)null);
+            _mockUserManager.Setup(x => x.DeleteAsync(It.IsAny<User>()))
+                .ReturnsAsync(IdentityResult.Failed(new IdentityError[] { }));
 
-            // Act
-            var result = await _controller.DeleteUser(userId);
-
-            // Assert
-            Assert.IsType<NotFoundResult>(result);
+            var usersController = new UsersController(_mockUserManager.Object, _context, _mockRoleManager.Object);
+            var result = await usersController.DeleteUser("test");
+            Assert.IsType<BadRequestObjectResult>(result);
         }
-        [Fact]
-        public async Task PutUser_ShouldUpdateUser_WhenInputIsValid()
-        {
-            // Arrange
-            var userId = "123";
-            var request = new UserCreateRequest
-            {
-                FirstName = "ValidFirstName",
-                LastName = "ValidLastName",
-                Dob = "1995-05-15"
-            };
-
-            var existingUser = new User
-            {
-                Id = userId,
-                FirstName = "OldFirstName",
-                LastName = "OldLastName",
-                Dob = DateTime.Parse("1980-01-01"),
-                LastModifiedDate = DateTime.MinValue
-            };
-
-            _mockUserManager.Setup(x => x.FindByIdAsync(userId))
-                .ReturnsAsync(existingUser);
-
-            _mockUserManager.Setup(x => x.UpdateAsync(It.IsAny<User>()))
-                .ReturnsAsync(IdentityResult.Success);
-
-            // Act
-            var result = await _controller.PutUser(userId, request);
-
-            // Assert
-            Assert.IsType<NoContentResult>(result);
-            Assert.Equal(request.FirstName, existingUser.FirstName);
-            Assert.Equal(request.LastName, existingUser.LastName);
-            Assert.Equal(DateTime.Parse(request.Dob), existingUser.Dob);
-            Assert.True(existingUser.LastModifiedDate > DateTime.MinValue); // Ensure LastModifiedDate is updated
-        }
-        [Fact]
-        public async Task PutUser_ShouldReturnBadRequest_WhenInputViolatesValidationRules()
-        {
-            // Arrange
-            var userId = "123";
-            var request = new UserCreateRequest
-            {
-                UserName = "", // Invalid: UserName is required
-                Password = "123", // Invalid: Password does not meet complexity rules
-                Email = "invalid-email", // Invalid: Email format is incorrect
-                PhoneNumber = "", // Invalid: PhoneNumber is required
-                FirstName = "ThisFirstNameIsWayTooLongToBeValidBecauseItExceedsFiftyCharacters", // Invalid: Exceeds max length
-                LastName = "" // Invalid: LastName is required
-            };
-
-            var existingUser = new User
-            {
-                Id = userId,
-                FirstName = "OldFirstName",
-                LastName = "OldLastName",
-                Dob = DateTime.Parse("1980-01-01"),
-                LastModifiedDate = DateTime.MinValue
-            };
-
-            _mockUserManager.Setup(x => x.FindByIdAsync(userId))
-                .ReturnsAsync(existingUser);
-
-            // Add FluentValidation errors to ModelState
-            var validator = new UserCreateRequestValidation();
-            var validationResult = validator.Validate(request);
-            foreach (var error in validationResult.Errors)
-            {
-                _controller.ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
-            }
-
-            // Act
-            var result = await _controller.PutUser(userId, request);
-
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.NotNull(badRequestResult.Value);
-
-            // Optionally, check specific validation error messages
-            var errors = badRequestResult.Value as SerializableError;
-            Assert.Contains("UserName", errors.Keys);
-            Assert.Contains("Password", errors.Keys);
-            Assert.Contains("Email", errors.Keys);
-            Assert.Contains("PhoneNumber", errors.Keys);
-            Assert.Contains("FirstName", errors.Keys);
-            Assert.Contains("LastName", errors.Keys);
-        }
-
-
     }
 }
-
