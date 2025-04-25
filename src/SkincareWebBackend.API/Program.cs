@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using SkincareWeb.BackendServer.Service;
+using SkincareWeb.BackendServer.Services;
 using SkincareWeb.ViewModels.Systems;
 using SkincareWebBackend.API.Data;
 using SkincareWebBackend.API.Data.Entities;
@@ -118,6 +119,7 @@ builder.Services.AddRazorPages();
 // Đăng ký Service Data seed và Email
 builder.Services.AddTransient<DataInitalizer>();
 builder.Services.AddTransient<IEmailSender, EmailSenderService>();
+builder.Services.AddTransient<ICacheService, DistributedCacheService>();
 var app = builder.Build();
 
 // 🔹 Cấu hình middleware (.NET 8)
