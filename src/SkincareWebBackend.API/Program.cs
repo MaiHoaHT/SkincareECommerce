@@ -33,20 +33,20 @@ builder.Services.AddIdentityServer()
 // 🔹 Đăng ký `AddLocalApiAuthentication()` đúng cách
 builder.Services.AddLocalApiAuthentication();
 
-// 🔹 Cấu hình xác thực Local API và JWT
+// Cấu hình xác thực Local API và JWT
 builder.Services.AddAuthentication()
     .AddLocalApi("Bearer", options =>
     {
         options.ExpectedScope = "api.skincare";
     })
-    .AddJwtBearer("JwtBearer", options => // 👈 Đổi tên scheme để tránh xung đột
+    .AddJwtBearer("JwtBearer", options =>
     {
         options.Authority = builder.Configuration["IdentityServer:Authority"];
         options.RequireHttpsMetadata = false;
         options.Audience = "api.skincare";
     });
 
-// 🔹 Đăng ký Authorization Policy
+// Đăng ký Authorization Policy
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("Bearer", policy =>

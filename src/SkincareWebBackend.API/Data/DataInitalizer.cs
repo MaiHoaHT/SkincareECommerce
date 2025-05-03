@@ -78,7 +78,9 @@ namespace SkincareWebBackend.API.Data
                     new Function { Id = "CUSTOMER", Name = "Khách hàng", Url = "/customers", Icon = "fa-users" },
                     new Function { Id = "SYSTEM", Name = "Hệ thống", Url = "/system", Icon = "fa-cogs" },
                     new Function { Id = "USER", Name = "Tài khoản", ParentId = "SYSTEM", Url = "/system/users" },
-                    new Function { Id = "ROLE", Name = "Phân quyền", ParentId = "SYSTEM", Url = "/system/roles" }
+                    new Function { Id = "ROLE", Name = "Phân quyền", ParentId = "SYSTEM", Url = "/system/roles" },
+                    new Function {Id = "SYSTEM_FUNCTION", Name = "Chức năng",ParentId = "SYSTEM",Url = "/system/functions",Icon="fa-desktop"},
+                    new Function {Id = "SYSTEM_PERMISSION", Name = "Quyền hạn",ParentId = "SYSTEM",Url = "/system/permissions",Icon="fa-desktop"},
                 });
                 await _context.SaveChangesAsync();
             }
