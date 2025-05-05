@@ -38,7 +38,7 @@ const Sidebar = () => {
                 <div className="flex items-center justify-between">
                     {!isCollapsed && (
                         <div className="flex items-center space-x-2">
-                            <span className="font-semibold text-lg">Management</span>
+                            <span className="font-semibold text-lg">Admin</span>
                         </div>
                     )}
                     <button

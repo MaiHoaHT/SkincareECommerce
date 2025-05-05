@@ -66,6 +66,7 @@ namespace SkincareWebBackend.API.Controllers
             return Ok(userViewModels);
         }
 
+
         // URL: GET: http://localhost:5001/api/users?filter={filter}&pageIndex=1&pageSize=10
         [HttpGet("filter")]
         public async Task<IActionResult> GetUsersPaging(string filter, int pageIndex, int pageSize)

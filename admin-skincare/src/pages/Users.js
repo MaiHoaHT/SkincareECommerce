@@ -1,30 +1,30 @@
 // src/pages/Users.jsx
 import React, { useState, useEffect } from 'react';
+import { useAuth } from 'react-oidc-context';
 import { userService } from '../services/userService';
+import { setAuthToken } from '../services/api';
 import UserForm from '../components/users/UserForm';
 
 const Users = () => {
+  const auth = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filter, setFilter] = useState('');
-  const [pageIndex, setPageIndex] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [totalRecords, setTotalRecords] = useState(0);
   const [showUserForm, setShowUserForm] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   
   useEffect(() => {
-    // Fetch users on component mount or when pagination/filter changes
-    fetchUsers();
-  }, [pageIndex, pageSize, filter]);
+    if (auth.isAuthenticated && auth.user?.access_token) {
+      setAuthToken(auth.user.access_token);
+      fetchUsers();
+    }
+  }, [auth.isAuthenticated, auth.user]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const data = await userService.getUsersPaging(filter, pageIndex, pageSize);
-      setUsers(data.items);
-      setTotalRecords(data.totalRecords);
+      const data = await userService.getUsers();
+      setUsers(data);
       setError(null);
     } catch (err) {
       console.error('Error fetching users:', err);
@@ -32,15 +32,6 @@ const Users = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleFilterChange = (e) => {
-    setFilter(e.target.value);
-    setPageIndex(1); // Reset về trang đầu tiên khi tìm kiếm
-  };
-
-  const handlePageChange = (newPage) => {
-    setPageIndex(newPage);
   };
 
   const handleEdit = async (id) => {
@@ -57,7 +48,6 @@ const Users = () => {
     if (window.confirm('Bạn có chắc chắn muốn xóa người dùng này?')) {
       try {
         await userService.deleteUser(id);
-        // Refresh danh sách sau khi xóa
         fetchUsers();
       } catch (err) {
         console.error('Error deleting user:', err);
@@ -66,17 +56,15 @@ const Users = () => {
   };
 
   const handleAddNew = () => {
-    setCurrentUser(null); // Reset currentUser để form trống
+    setCurrentUser(null);
     setShowUserForm(true);
   };
 
   const handleFormSubmit = async (userData) => {
     try {
       if (currentUser) {
-        // Update existing user
         await userService.updateUser(currentUser.id, userData);
       } else {
-        // Create new user
         await userService.createUser(userData);
       }
       setShowUserForm(false);
@@ -84,41 +72,6 @@ const Users = () => {
     } catch (err) {
       console.error('Error saving user:', err);
     }
-  };
-
-  const renderPagination = () => {
-    const totalPages = Math.ceil(totalRecords / pageSize);
-    const pages = [];
-    
-    for (let i = 1; i <= totalPages; i++) {
-      pages.push(
-        <button 
-          key={i} 
-          onClick={() => handlePageChange(i)}
-          className={pageIndex === i ? 'active' : ''}
-        >
-          {i}
-        </button>
-      );
-    }
-    
-    return (
-      <div className="pagination">
-        <button 
-          onClick={() => handlePageChange(pageIndex - 1)} 
-          disabled={pageIndex === 1}
-        >
-          Prev
-        </button>
-        {pages}
-        <button 
-          onClick={() => handlePageChange(pageIndex + 1)}
-          disabled={pageIndex === totalPages}
-        >
-          Next
-        </button>
-      </div>
-    );
   };
 
   if (loading && !users.length) {
@@ -134,16 +87,6 @@ const Users = () => {
       <h1>Quản lý người dùng</h1>
       
       <div className="user-controls">
-        <div className="search-box">
-          <input 
-            type="text" 
-            placeholder="Tìm kiếm theo email, tên đăng nhập hoặc số điện thoại" 
-            value={filter}
-            onChange={handleFilterChange}
-          />
-          <button onClick={fetchUsers}>Tìm kiếm</button>
-        </div>
-        
         <button className="add-button" onClick={handleAddNew}>Thêm mới</button>
       </div>
       
@@ -176,8 +119,6 @@ const Users = () => {
           ))}
         </tbody>
       </table>
-      
-      {renderPagination()}
       
       {showUserForm && (
         <UserForm 

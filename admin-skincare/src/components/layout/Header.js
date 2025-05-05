@@ -25,7 +25,7 @@ export const Header = () => {
                         <div className="flex items-center justify-center w-12 h-12">
                             <img src="/logoStore.png" alt="Logo" className="h-12 w-12 object-contain" />
                         </div>
-                        <h1 className="ml-3 text-2xl font-bold text-gray-900">Skincare Admin</h1>
+                        <h1 className="ml-3 text-2xl font-bold text-gray-900">Flora Store</h1>
                     </div>
 
                     {/* Thanh tìm kiếm */}
