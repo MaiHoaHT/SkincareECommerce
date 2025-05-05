@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Silent Refresh</title>
+    <script>
+        window.onload = function() {
+            parent.postMessage(window.location.href, window.location.origin);
+        };
+    </script>
+</head>
+<body>
+    <!-- Silent refresh iframe -->
+</body>
+</html> 

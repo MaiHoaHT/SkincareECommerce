@@ -32,7 +32,6 @@ builder.Services.AddIdentityServer()
 
 // 🔹 Đăng ký `AddLocalApiAuthentication()` đúng cách
 builder.Services.AddLocalApiAuthentication();
-
 // Cấu hình xác thực Local API và JWT
 builder.Services.AddAuthentication()
     .AddLocalApi("Bearer", options =>
@@ -61,7 +60,16 @@ builder.Services.AddAuthorization(options =>
         policy.RequireClaim("scope", "api.skincare");
     });
 });
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ReactPolicy", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
 // 🔹 Đăng ký dịch vụ MVC, Razor Pages & Swagger với OAuth2
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -123,6 +131,7 @@ builder.Services.AddTransient<ICacheService, DistributedCacheService>();
 var app = builder.Build();
 
 // 🔹 Cấu hình middleware (.NET 8)
+app.UseCors("ReactPolicy");
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseIdentityServer();

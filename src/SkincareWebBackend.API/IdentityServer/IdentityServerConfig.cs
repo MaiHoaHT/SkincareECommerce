@@ -60,7 +60,42 @@ namespace SkincareWebBackend.IdentityServer
                         IdentityServerConstants.StandardScopes.Profile,
                         "api.skincare"
                     }
+                },
+            new Client
+            {
+                ClientName = "React Admin",
+                ClientId = "react_admin",
+                AccessTokenType = AccessTokenType.Reference,
+                RequireConsent = false,
+
+                RequireClientSecret = false,
+                AllowedGrantTypes = GrantTypes.Code,
+                RequirePkce = true,
+
+                AllowAccessTokensViaBrowser = true,
+                RedirectUris = new List<string>
+                {
+                    "http://localhost:3000",
+                    "http://localhost:3000/signin-oidc",
+                    "http://localhost:3000/silent-refresh.html"
+                },
+                PostLogoutRedirectUris = new List<string>
+                {
+                    "http://localhost:3000/unauthorized",
+                    "http://localhost:3000/signout-callback-oidc",
+                    "http://localhost:3000"
+                },
+                AllowedCorsOrigins = new List<string>
+                {
+                    "http://localhost:3000"
+                },
+                AllowedScopes = new List<string>
+                {
+                    IdentityServerConstants.StandardScopes.OpenId,
+                    IdentityServerConstants.StandardScopes.Profile,
+                    "api.skincare"
                 }
+            }
 
 
 

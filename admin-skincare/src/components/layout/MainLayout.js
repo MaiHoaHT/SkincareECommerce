@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
-import Header from './Header';
+import { Header } from './Header';
 import Sidebar from './Sidebar';
 import Footer from './Footer';
 import { useSidebar } from '../../hooks/useSidebar'; // Đảm bảo đường dẫn đúng
@@ -25,30 +25,19 @@ export const MainLayout = ({ children }) => {
   const pageName = getPageNameFromPath(location.pathname);
   
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Sidebar với kiểu hiển thị giống code cũ */}
-      <div className={`${isSidebarOpen ? 'block' : 'hidden'} md:block transition-all duration-300 
-                      w-64 h-full shadow-lg fixed md:relative z-30`}>
+    <div className="min-h-screen bg-gray-100">
+      <Header />
+      <div className="flex">
         <Sidebar />
-      </div>
-      
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header 
-          pageName={pageName} 
-          toggleSidebar={toggleSidebar} 
-        />
-        
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 p-6">
           <div className="mb-6">
             <h1 className="text-2xl font-bold">{pageName}</h1>
             <p className="text-gray-600">Welcome to your admin dashboard</p>
           </div>
           {children}
         </main>
-        
-        <Footer />
       </div>
+      <Footer />
     </div>
   );
 };

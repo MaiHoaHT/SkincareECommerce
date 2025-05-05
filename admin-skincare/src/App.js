@@ -1,5 +1,10 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './auth/AuthProvider';
+import { AuthGuard } from './auth/AuthGuard';
+import { Login } from './pages/Login';
+import { Unauthorized } from './pages/Unauthorized';
+import { SigninCallback } from './pages/SigninCallback';
 import { MainLayout } from './components/layout';
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
@@ -12,20 +17,34 @@ import routes from './constants/routes';
 
 function App() {
   return (
-    <Router>
-      <MainLayout>
+    <AuthProvider>
+      <Router>
         <Routes>
-          <Route path={routes.dashboard} element={<Dashboard />} />
-          <Route path={routes.users} element={<Users />} />
-          <Route path={routes.analytics} element={<Analytics />} />
-          <Route path={routes.products} element={<Products />} />
-          <Route path={routes.calendar} element={<Calendar />} />
-          <Route path={routes.messages} element={<Messages />} />
-          <Route path={routes.settings} element={<Settings />} />
-          <Route path="*" element={<Navigate to={routes.dashboard} replace />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route path="/signin-oidc" element={<SigninCallback />} />
+          <Route
+            path="/*"
+            element={
+              <AuthGuard>
+                <MainLayout>
+                  <Routes>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/users" element={<Users />} />
+                    <Route path="/analytics" element={<Analytics />} />
+                    <Route path="/products" element={<Products />} />
+                    <Route path="/calendar" element={<Calendar />} />
+                    <Route path="/messages" element={<Messages />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </MainLayout>
+              </AuthGuard>
+            }
+          />
         </Routes>
-      </MainLayout>
-    </Router>
+      </Router>
+    </AuthProvider>
   );
 }
 
