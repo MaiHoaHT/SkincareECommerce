@@ -21,6 +21,7 @@ namespace SkincareWeb.BackendServer.Controllers
         {
             var productQuickViewModel = await _context.Products.AsQueryable().Select(p => new ProductQuickViewModel()
             {
+                Id = p.Id,
                 Name = p.Name,
                 Price = p.Price,
                 Discount = p.Discount,
@@ -70,6 +71,7 @@ namespace SkincareWeb.BackendServer.Controllers
             // using a quick view model to reduce the amount of data sent to the client
             var productQuickView = await products.Select(p => new ProductQuickViewModel()
             {
+                Id = p.Id,
                 Name = p.Name,
                 Price = p.Price,
                 Discount = p.Discount,
@@ -91,6 +93,7 @@ namespace SkincareWeb.BackendServer.Controllers
             // Use ProductQuickViewModel to reduce data payload sent to client
             var productQuickView = await products.Select(p => new ProductQuickViewModel()
             {
+                Id = p.Id,
                 Name = p.Name,
                 Price = p.Price,
                 Discount = p.Discount,

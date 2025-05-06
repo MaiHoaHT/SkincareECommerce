@@ -66,8 +66,10 @@ export const productService = {
   // Cập nhật sản phẩm
   updateProduct: async (id, productData) => {
     try {
-      const response = await api.put(`/api/products/${id}`, productData.toJSON());
-      return response.data;
+      await api.put(`/api/Products/${id}`, productData.toJSON());
+      // Sau khi cập nhật thành công, lấy lại thông tin sản phẩm mới nhất
+      const response = await api.get(`/api/Products/${id}`);
+      return ProductModel.fromApi(response.data);
     } catch (error) {
       if (error.response?.status === 404) {
         throw new Error('Không tìm thấy sản phẩm');

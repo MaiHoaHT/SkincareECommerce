@@ -31,8 +31,8 @@ function App() {
             path="/*"
             element={
               <AuthGuard>
-                <MainLayout>
-                  <Routes>
+              <MainLayout>
+                <Routes>
                     <Route path={routes.dashboard} element={<Dashboard />} />
                     <Route path={routes.products} element={<Products />} />
                     <Route path={routes.productList} element={<ProductList />} />
@@ -45,11 +45,11 @@ function App() {
                     <Route path={routes.functions} element={<Functions />} />
                     <Route path={routes.permissions} element={<Permissions />} />
                     <Route path="*" element={<Navigate to={routes.dashboard} replace />} />
-                  </Routes>
-                </MainLayout>
+                </Routes>
+              </MainLayout>
               </AuthGuard>
             }
-          />
+            />
         </Routes>
       </Router>
     </AuthProvider>

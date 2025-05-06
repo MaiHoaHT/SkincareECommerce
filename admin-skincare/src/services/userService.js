@@ -6,7 +6,7 @@ export const userService = {
   getUsers: async () => {
     try {
       const response = await api.get('/api/Users');
-      return response.data;
+    return response.data;
     } catch (error) {
       console.error('Error in getUsers:', error);
       throw error;
@@ -34,7 +34,7 @@ export const userService = {
         }
       });
       
-      return response.data;
+    return response.data;
     } catch (error) {
       console.error('Error in getUsersPaging:', error);
       throw error;
@@ -44,8 +44,8 @@ export const userService = {
   // Lấy chi tiết người dùng theo ID
   getUser: async (id) => {
     try {
-      const response = await api.get(`/api/Users/${id}`);
-      return response.data;
+    const response = await api.get(`/api/Users/${id}`);
+    return response.data;
     } catch (error) {
       console.error('Error in getUser:', error);
       throw error;
@@ -55,8 +55,8 @@ export const userService = {
   // Tạo người dùng mới
   createUser: async (userData) => {
     try {
-      const response = await api.post('/api/Users', userData);
-      return response.data;
+    const response = await api.post('/api/Users', userData);
+    return response.data;
     } catch (error) {
       console.error('Error in createUser:', error);
       throw error;
@@ -66,8 +66,8 @@ export const userService = {
   // Cập nhật người dùng
   updateUser: async (id, userData) => {
     try {
-      const response = await api.put(`/api/Users/${id}`, userData);
-      return response.data;
+    const response = await api.put(`/api/Users/${id}`, userData);
+    return response.data;
     } catch (error) {
       console.error('Error in updateUser:', error);
       throw error;
@@ -77,8 +77,8 @@ export const userService = {
   // Đổi mật khẩu người dùng
   changePassword: async (id, passwordData) => {
     try {
-      const response = await api.put(`/api/Users/${id}/change-password`, passwordData);
-      return response.data;
+    const response = await api.put(`/api/Users/${id}/change-password`, passwordData);
+    return response.data;
     } catch (error) {
       console.error('Error in changePassword:', error);
       throw error;
@@ -88,19 +88,19 @@ export const userService = {
   // Xóa người dùng
   deleteUser: async (id) => {
     try {
-      const response = await api.delete(`/api/Users/${id}`);
-      return response.data;
+    const response = await api.delete(`/api/Users/${id}`);
+    return response.data;
     } catch (error) {
       console.error('Error in deleteUser:', error);
       throw error;
     }
   },
-
+  
   // Lấy menu theo quyền của user
   getUserMenu: async (userId) => {
     try {
-      const response = await api.get(`/api/Users/${userId}/menu`);
-      return response.data;
+    const response = await api.get(`/api/Users/${userId}/menu`);
+    return response.data;
     } catch (error) {
       console.error('Error in getUserMenu:', error);
       throw error;

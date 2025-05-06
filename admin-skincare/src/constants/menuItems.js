@@ -4,8 +4,8 @@ import {
   FolderTree,
   Tag,
   ShoppingCart,
-  Users,
-  Settings,
+  Users, 
+  Settings, 
   UserCog,
   Shield,
   Code,
@@ -26,7 +26,7 @@ const menuItems = [
     icon: Package,
     path: '/products',
     children: [
-      {
+  {
         id: 'productList',
         title: 'Danh sách sản phẩm',
         icon: List,
@@ -37,8 +37,8 @@ const menuItems = [
         title: 'Danh mục',
         icon: FolderTree,
         path: '/products/categories'
-      },
-      {
+  },
+  {
         id: 'brands',
         title: 'Thương hiệu',
         icon: Tag,
