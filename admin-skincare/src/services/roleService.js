@@ -1,12 +1,13 @@
 // src/services/roleService.js
 import api from './api';
+import RoleModel from '../models/RoleModel';
 
 export const roleService = {
   // Lấy danh sách roles
   getRoles: async () => {
     try {
       const response = await api.get('/api/Roles');
-      return response.data;
+      return RoleModel.fromApiList(response.data);
     } catch (error) {
       console.error('Error in getRoles:', error);
       throw error;
@@ -25,13 +26,8 @@ export const roleService = {
         queryParams.append('filter', filter.trim());
       }
       
-      const response = await api.get(`/api/Roles/filter?${queryParams.toString()}`, {
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-      
-      return response.data;
+      const response = await api.get(`/api/Roles/filter?${queryParams.toString()}`);
+      return RoleModel.fromApiList(response.data);
     } catch (error) {
       console.error('Error in getRolesPaging:', error);
       throw error;
@@ -42,10 +38,10 @@ export const roleService = {
   getRole: async (id) => {
     try {
       const response = await api.get(`/api/Roles/${id}`);
-      return response.data;
+      return RoleModel.fromApi(response.data);
     } catch (error) {
       if (error.response?.status === 404) {
-        throw new Error('Không tìm thấy role');
+        throw new Error('Không tìm thấy vai trò');
       }
       console.error('Error in getRole:', error);
       throw error;
@@ -55,11 +51,8 @@ export const roleService = {
   // Tạo role mới
   createRole: async (roleData) => {
     try {
-      const response = await api.post('/api/Roles', {
-        id: roleData.id,
-        name: roleData.name
-      });
-      return response.data;
+      const response = await api.post('/api/Roles', roleData.toJSON());
+      return RoleModel.fromApi(response.data);
     } catch (error) {
       if (error.response?.data?.errors) {
         throw new Error(error.response.data.errors.join(', '));
@@ -72,20 +65,14 @@ export const roleService = {
   // Cập nhật role
   updateRole: async (id, roleData) => {
     try {
-      const response = await api.put(`/api/Roles/${id}`, {
-        id: roleData.id,
-        name: roleData.name
-      });
-      return response.data;
+      const response = await api.put(`/api/Roles/${id}`, roleData.toJSON());
+      return RoleModel.fromApi(response.data);
     } catch (error) {
       if (error.response?.status === 404) {
-        throw new Error('Không tìm thấy role');
+        throw new Error('Không tìm thấy vai trò');
       }
       if (error.response?.status === 400) {
         throw new Error('Dữ liệu không hợp lệ');
-      }
-      if (error.response?.data?.errors) {
-        throw new Error(error.response.data.errors.join(', '));
       }
       console.error('Error in updateRole:', error);
       throw error;
@@ -99,10 +86,7 @@ export const roleService = {
       return response.data;
     } catch (error) {
       if (error.response?.status === 404) {
-        throw new Error('Không tìm thấy role');
-      }
-      if (error.response?.data?.errors) {
-        throw new Error(error.response.data.errors.join(', '));
+        throw new Error('Không tìm thấy vai trò');
       }
       console.error('Error in deleteRole:', error);
       throw error;
