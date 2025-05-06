@@ -1,72 +1,98 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit, Trash2, Shield } from 'lucide-react';
+import { Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { userService } from '../../services/userService';
+import { useAuth } from 'react-oidc-context';
+import { setAuthToken } from '../../services/api';
 
 const Users = () => {
+  const auth = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Placeholder data
-  const mockUsers = [
-    { 
-      id: 1, 
-      username: 'admin', 
-      fullName: 'Administrator', 
-      email: 'admin@example.com', 
-      role: 'Admin',
-      status: 'Active',
-      lastLogin: '2024-03-15 10:30'
-    },
-    { 
-      id: 2, 
-      username: 'manager', 
-      fullName: 'Manager User', 
-      email: 'manager@example.com', 
-      role: 'Manager',
-      status: 'Active',
-      lastLogin: '2024-03-14 15:45'
-    },
-    // Add more mock data as needed
-  ];
-
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setUsers(mockUsers);
+    if (auth.isAuthenticated && auth.user?.access_token) {
+      setAuthToken(auth.user.access_token);
+      fetchUsers();
+    }
+  }, [auth.isAuthenticated, auth.user]);
+
+  const fetchUsers = async (filter = '') => {
+    try {
+      setLoading(true);
+      // Nếu filter trống, sử dụng getUsers để lấy toàn bộ danh sách
+      const response = filter.trim() === '' 
+        ? await userService.getUsers()
+        : await userService.getUsersPaging(filter, 1, 10);
+      
+      // Xử lý response dựa trên loại API được gọi
+      if (filter.trim() === '') {
+        setUsers(response);
+      } else {
+        setUsers(response.items || []);
+      }
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching users:', err);
+      setError('Không thể tải danh sách người dùng. Vui lòng thử lại sau.');
+      setUsers([]);
+    } finally {
       setLoading(false);
-    }, 1000);
-  }, []);
-
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const filteredUsers = users.filter(user =>
-    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Active':
-        return 'bg-green-100 text-green-800';
-      case 'Inactive':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
     }
   };
+
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    // Gọi API với filter là giá trị tìm kiếm
+    fetchUsers(value);
+  };
+
+  const handleDelete = async (userId) => {
+    if (window.confirm('Bạn có chắc chắn muốn xóa người dùng này?')) {
+      try {
+        await userService.deleteUser(userId);
+        await fetchUsers(searchTerm);
+      } catch (err) {
+        console.error('Error deleting user:', err);
+        setError('Không thể xóa người dùng. Vui lòng thử lại sau.');
+      }
+    }
+  };
+
+  const handleEdit = (userId) => {
+    // Implement edit functionality
+    console.log('Edit user:', userId);
+  };
+
+  const handleAdd = () => {
+    // Implement add functionality
+    console.log('Add new user');
+  };
+
+  if (!auth.isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Quản lý người dùng</h1>
-        <button className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-600">
+        <button 
+          onClick={handleAdd}
+          className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-600"
+        >
           <Plus className="w-5 h-5 mr-2" />
           Thêm người dùng
         </button>
       </div>
+
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <span className="block sm:inline">{error}</span>
+        </div>
+      )}
 
       <div className="bg-white rounded-lg shadow">
         <div className="p-4 border-b">
@@ -91,31 +117,30 @@ const Users = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vai trò</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Đăng nhập gần nhất</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
                     Đang tải...
                   </td>
                 </tr>
-              ) : filteredUsers.length === 0 ? (
+              ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
-                    Không tìm thấy người dùng
+                  <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
+                    Không tìm thấy người dùng nào
                   </td>
                 </tr>
               ) : (
-                filteredUsers.map((user) => (
-                  <tr key={user.id}>
+                users.map((user) => (
+                  <tr key={user.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{user.username}</div>
+                      <div className="text-sm font-medium text-gray-900">{user.userName}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{user.fullName}</div>
+                      <div className="text-sm text-gray-900">{user.firstName} {user.lastName}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{user.email}</div>
@@ -124,21 +149,23 @@ const Users = () => {
                       <div className="text-sm text-gray-900">{user.role}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(user.status)}`}>
-                        {user.status}
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {user.isActive ? 'Hoạt động' : 'Không hoạt động'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{user.lastLogin}</div>
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button className="text-blue-600 hover:text-blue-900 mr-4">
-                        <Shield className="w-5 h-5" />
-                      </button>
-                      <button className="text-blue-600 hover:text-blue-900 mr-4">
+                      <button 
+                        onClick={() => handleEdit(user.id)}
+                        className="text-blue-600 hover:text-blue-900 mr-4"
+                      >
                         <Edit className="w-5 h-5" />
                       </button>
-                      <button className="text-red-600 hover:text-red-900">
+                      <button 
+                        onClick={() => handleDelete(user.id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
                         <Trash2 className="w-5 h-5" />
                       </button>
                     </td>

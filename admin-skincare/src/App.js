@@ -8,6 +8,7 @@ import { SigninCallback } from './pages/SigninCallback';
 import { MainLayout } from './components/layout';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
+import ProductList from './pages/Products/ProductList';
 import Categories from './pages/Products/Categories';
 import Brands from './pages/Products/Brands';
 import Orders from './pages/Orders';
@@ -34,6 +35,7 @@ function App() {
                   <Routes>
                     <Route path={routes.dashboard} element={<Dashboard />} />
                     <Route path={routes.products} element={<Products />} />
+                    <Route path={routes.productList} element={<ProductList />} />
                     <Route path={routes.categories} element={<Categories />} />
                     <Route path={routes.brands} element={<Brands />} />
                     <Route path={routes.orders} element={<Orders />} />
