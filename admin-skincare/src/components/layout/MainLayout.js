@@ -25,14 +25,14 @@ export const MainLayout = ({ children }) => {
   const pageName = getPageNameFromPath(location.pathname);
   
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen flex flex-col bg-gray-100">
       <Header />
-      <div className="flex">
-        <Sidebar />
+      <div className="flex flex-1">
+        <Sidebar sidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
         <main className="flex-1 p-6">
           <div className="mb-6">
             <h1 className="text-2xl font-bold">{pageName}</h1>
-            <p className="text-gray-600">Welcome to your admin dashboard</p>
+            <p className="text-gray-600">Chào mừng đến với hệ thống quản lý Flora Skincare</p>
           </div>
           {children}
         </main>

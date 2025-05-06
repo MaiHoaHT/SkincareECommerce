@@ -6,7 +6,7 @@ export const userService = {
   getUsers: async () => {
     try {
       const response = await api.get('/api/Users');
-      return response.data;
+    return response.data;
     } catch (error) {
       console.error('Error in getUsers:', error);
       throw error;
@@ -31,7 +31,7 @@ export const userService = {
         }
       });
       
-      return response.data;
+    return response.data;
     } catch (error) {
       console.error('Error in getUsersPaging:', error);
       throw error;

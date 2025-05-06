@@ -7,12 +7,15 @@ import { Unauthorized } from './pages/Unauthorized';
 import { SigninCallback } from './pages/SigninCallback';
 import { MainLayout } from './components/layout';
 import Dashboard from './pages/Dashboard';
-import Users from './pages/Users';
-import Analytics from './pages/Analytics';
 import Products from './pages/Products';
-import Calendar from './pages/Calendar';
-import Messages from './pages/Messages';
-import Settings from './pages/Settings';
+import Categories from './pages/Products/Categories';
+import Brands from './pages/Products/Brands';
+import Orders from './pages/Orders';
+import Customers from './pages/Customers';
+import Users from './pages/System/Users';
+import Roles from './pages/System/Roles';
+import Functions from './pages/System/Functions';
+import Permissions from './pages/System/Permissions';
 import routes from './constants/routes';
 
 function App() {
@@ -29,14 +32,17 @@ function App() {
               <AuthGuard>
                 <MainLayout>
                   <Routes>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="/users" element={<Users />} />
-                    <Route path="/analytics" element={<Analytics />} />
-                    <Route path="/products" element={<Products />} />
-                    <Route path="/calendar" element={<Calendar />} />
-                    <Route path="/messages" element={<Messages />} />
-                    <Route path="/settings" element={<Settings />} />
-                    <Route path="*" element={<Navigate to="/" replace />} />
+                    <Route path={routes.dashboard} element={<Dashboard />} />
+                    <Route path={routes.products} element={<Products />} />
+                    <Route path={routes.categories} element={<Categories />} />
+                    <Route path={routes.brands} element={<Brands />} />
+                    <Route path={routes.orders} element={<Orders />} />
+                    <Route path={routes.customers} element={<Customers />} />
+                    <Route path={routes.users} element={<Users />} />
+                    <Route path={routes.roles} element={<Roles />} />
+                    <Route path={routes.functions} element={<Functions />} />
+                    <Route path={routes.permissions} element={<Permissions />} />
+                    <Route path="*" element={<Navigate to={routes.dashboard} replace />} />
                   </Routes>
                 </MainLayout>
               </AuthGuard>

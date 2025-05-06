@@ -1,55 +1,87 @@
 import { 
-  Home, 
-  Users, 
-  Settings, 
-  BarChart2, 
-  Package, 
-  Calendar, 
-  MessageSquare 
+  LayoutDashboard,
+  Package,
+  FolderTree,
+  Tag,
+  ShoppingCart,
+  Users,
+  Settings,
+  UserCog,
+  Shield,
+  Code,
+  Lock
 } from 'lucide-react';
 
 const menuItems = [
   {
     id: 'dashboard',
-    title: 'Dashboard',
-    icon: Home,
+    title: 'Thống kê',
+    icon: LayoutDashboard,
     path: '/'
   },
   {
-    id: 'users',
-    title: 'Users',
-    icon: Users,
-    path: '/users'
-  },
-  {
-    id: 'analytics',
-    title: 'Analytics',
-    icon: BarChart2,
-    path: '/analytics'
-  },
-  {
     id: 'products',
-    title: 'Products',
+    title: 'Sản phẩm',
     icon: Package,
-    path: '/products'
+    path: '/products',
+    children: [
+      {
+        id: 'categories',
+        title: 'Danh mục',
+        icon: FolderTree,
+        path: '/products/categories'
+      },
+      {
+        id: 'brands',
+        title: 'Thương hiệu',
+        icon: Tag,
+        path: '/products/brands'
+      }
+    ]
   },
   {
-    id: 'calendar',
-    title: 'Calendar',
-    icon: Calendar,
-    path: '/calendar'
+    id: 'orders',
+    title: 'Đơn hàng',
+    icon: ShoppingCart,
+    path: '/orders'
   },
   {
-    id: 'messages',
-    title: 'Messages',
-    icon: MessageSquare,
-    path: '/messages'
+    id: 'customers',
+    title: 'Khách hàng',
+    icon: Users,
+    path: '/customers'
   },
   {
-    id: 'settings',
-    title: 'Settings',
+    id: 'system',
+    title: 'Hệ thống',
     icon: Settings,
-    path: '/settings'
+    path: '/system',
+    children: [
+      {
+        id: 'users',
+        title: 'Tài khoản',
+        icon: UserCog,
+        path: '/system/users'
+      },
+      {
+        id: 'roles',
+        title: 'Phân quyền',
+        icon: Shield,
+        path: '/system/roles'
+      },
+      {
+        id: 'functions',
+        title: 'Chức năng',
+        icon: Code,
+        path: '/system/functions'
+      },
+      {
+        id: 'permissions',
+        title: 'Quyền hạn',
+        icon: Lock,
+        path: '/system/permissions'
+      }
+    ]
   }
 ];
 

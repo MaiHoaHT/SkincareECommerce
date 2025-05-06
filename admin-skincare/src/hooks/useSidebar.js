@@ -1,11 +1,11 @@
 import { useState } from 'react';
 
 export function useSidebar(initialState = true) {
-  const [sidebarOpen, setSidebarOpen] = useState(initialState);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(initialState);
   
   const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
+    setIsSidebarOpen(!isSidebarOpen);
   };
   
-  return { sidebarOpen, toggleSidebar };
+  return { isSidebarOpen, toggleSidebar };
 }

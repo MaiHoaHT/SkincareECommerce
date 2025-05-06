@@ -72,15 +72,15 @@ namespace SkincareWebBackend.API.Data
                 {
                     new Function { Id = "DASHBOARD", Name = "Thống kê", Url = "/dashboard", Icon = "fa-dashboard" },
                     new Function { Id = "PRODUCT", Name = "Sản phẩm", Url = "/products", Icon = "fa-product-hunt" },
-                    new Function { Id = "CATEGORY", Name = "Danh mục", ParentId = "PRODUCT", Url = "/products/categories" },
-                    new Function { Id = "BRAND", Name = "Thương hiệu", ParentId = "PRODUCT", Url = "/products/brands" },
+                    new Function { Id = "PRODUCT_CATEGORY", Name = "Danh mục", ParentId = "PRODUCT", Url = "/products/categories" },
+                    new Function { Id = "PRODUCT_BRAND", Name = "Thương hiệu", ParentId = "PRODUCT", Url = "/products/brands" },
                     new Function { Id = "ORDER", Name = "Đơn hàng", Url = "/orders", Icon = "fa-shopping-cart" },
                     new Function { Id = "CUSTOMER", Name = "Khách hàng", Url = "/customers", Icon = "fa-users" },
                     new Function { Id = "SYSTEM", Name = "Hệ thống", Url = "/system", Icon = "fa-cogs" },
-                    new Function { Id = "USER", Name = "Tài khoản", ParentId = "SYSTEM", Url = "/system/users" },
-                    new Function { Id = "ROLE", Name = "Phân quyền", ParentId = "SYSTEM", Url = "/system/roles" },
-                    new Function {Id = "SYSTEM_FUNCTION", Name = "Chức năng",ParentId = "SYSTEM",Url = "/system/functions",Icon="fa-desktop"},
-                    new Function {Id = "SYSTEM_PERMISSION", Name = "Quyền hạn",ParentId = "SYSTEM",Url = "/system/permissions",Icon="fa-desktop"},
+                    new Function { Id = "SYSTEM_USER", Name = "Tài khoản", ParentId = "SYSTEM", Url = "/system/users" },
+                    new Function { Id = "SYSTEM_ROLE", Name = "Phân quyền", ParentId = "SYSTEM", Url = "/system/roles" },
+                    new Function { Id = "SYSTEM_FUNCTION", Name = "Chức năng",ParentId = "SYSTEM",Url = "/system/functions",Icon="fa-desktop"},
+                    new Function { Id = "SYSTEM_PERMISSION", Name = "Quyền hạn",ParentId = "SYSTEM",Url = "/system/permissions",Icon="fa-desktop"},
                 });
                 await _context.SaveChangesAsync();
             }

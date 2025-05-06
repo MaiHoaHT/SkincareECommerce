@@ -1,11 +1,15 @@
 const routes = {
     dashboard: '/',
-    users: '/users',
-    analytics: '/analytics',
     products: '/products',
-    calendar: '/calendar',
-    messages: '/messages',
-    settings: '/settings'
+    categories: '/products/categories',
+    brands: '/products/brands',
+    orders: '/orders',
+    customers: '/customers',
+    system: '/system',
+    users: '/system/users',
+    roles: '/system/roles',
+    functions: '/system/functions',
+    permissions: '/system/permissions'
   };
   
   export default routes;
