@@ -9,7 +9,8 @@ import {
   UserCog,
   Shield,
   Code,
-  Lock
+  Lock,
+  List
 } from 'lucide-react';
 
 const menuItems = [
@@ -25,6 +26,12 @@ const menuItems = [
     icon: Package,
     path: '/products',
     children: [
+      {
+        id: 'productList',
+        title: 'Danh sách sản phẩm',
+        icon: List,
+        path: '/products/list'
+      },
       {
         id: 'categories',
         title: 'Danh mục',

@@ -1,6 +1,7 @@
 const routes = {
     dashboard: '/',
     products: '/products',
+    productList: '/products/list',
     categories: '/products/categories',
     brands: '/products/brands',
     orders: '/orders',
