@@ -1,39 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit, Trash2, Shield } from 'lucide-react';
+import { Search, Shield } from 'lucide-react';
+import { permissionService } from '../../services/permissionService';
+import { useAuth } from 'react-oidc-context';
+import { setAuthToken } from '../../services/api';
 
 const Permissions = () => {
   const [permissions, setPermissions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-
-  // Placeholder data
-  const mockPermissions = [
-    { 
-      id: 1, 
-      name: 'Xem danh sách người dùng', 
-      code: 'USER_VIEW',
-      description: 'Quyền xem danh sách người dùng',
-      function: 'Quản lý người dùng',
-      status: 'Active'
-    },
-    { 
-      id: 2, 
-      name: 'Thêm người dùng', 
-      code: 'USER_CREATE',
-      description: 'Quyền thêm người dùng mới',
-      function: 'Quản lý người dùng',
-      status: 'Active'
-    },
-    // Add more mock data as needed
-  ];
+  const auth = useAuth();
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setPermissions(mockPermissions);
+    if (auth.user) {
+      setAuthToken(auth.user.access_token);
+      fetchPermissions();
+    }
+  }, [auth.user]);
+
+  const fetchPermissions = async () => {
+    try {
+      setLoading(true);
+      const data = await permissionService.getCommandViews();
+      setPermissions(data);
+      setError(null);
+    } catch (err) {
+      setError('Không thể tải danh sách quyền hạn. Vui lòng thử lại sau.');
+      console.error('Error fetching permissions:', err);
+    } finally {
       setLoading(false);
-    }, 1000);
-  }, []);
+    }
+  };
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -41,29 +38,17 @@ const Permissions = () => {
 
   const filteredPermissions = permissions.filter(permission =>
     permission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    permission.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    permission.description.toLowerCase().includes(searchTerm.toLowerCase())
+    permission.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Active':
-        return 'bg-green-100 text-green-800';
-      case 'Inactive':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+  if (!auth.user) {
+    return null;
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Quản lý quyền hạn</h1>
-        <button className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-600">
-          <Plus className="w-5 h-5 mr-2" />
-          Thêm quyền hạn
-        </button>
       </div>
 
       <div className="bg-white rounded-lg shadow">
@@ -80,68 +65,86 @@ const Permissions = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên quyền hạn</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã quyền hạn</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mô tả</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chức năng</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {loading ? (
+        {loading ? (
+          <div className="p-4 text-center text-gray-500">Đang tải...</div>
+        ) : error ? (
+          <div className="p-4 text-center text-red-500">{error}</div>
+        ) : filteredPermissions.length === 0 ? (
+          <div className="p-4 text-center text-gray-500">Không tìm thấy quyền hạn nào</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
                 <tr>
-                  <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
-                    Đang tải...
-                  </td>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên chức năng</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Xem</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Thêm</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Sửa</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Xóa</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Duyệt</th>
                 </tr>
-              ) : filteredPermissions.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
-                    Không tìm thấy quyền hạn
-                  </td>
-                </tr>
-              ) : (
-                filteredPermissions.map((permission) => (
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredPermissions.map((permission) => (
                   <tr key={permission.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{permission.name}</div>
+                      <div className="text-sm font-medium text-gray-900">{permission.id}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <Shield className="w-4 h-4 mr-1" />
-                        {permission.code}
+                      <div className="text-sm text-gray-900">{permission.name}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <div className="text-sm text-gray-900">
+                        {permission.hasPermission('VIEW') ? (
+                          <Shield className="w-5 h-5 text-green-500 mx-auto" />
+                        ) : (
+                          <Shield className="w-5 h-5 text-gray-300 mx-auto" />
+                        )}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">{permission.description}</div>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <div className="text-sm text-gray-900">
+                        {permission.hasPermission('CREATE') ? (
+                          <Shield className="w-5 h-5 text-green-500 mx-auto" />
+                        ) : (
+                          <Shield className="w-5 h-5 text-gray-300 mx-auto" />
+                        )}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{permission.function}</div>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <div className="text-sm text-gray-900">
+                        {permission.hasPermission('UPDATE') ? (
+                          <Shield className="w-5 h-5 text-green-500 mx-auto" />
+                        ) : (
+                          <Shield className="w-5 h-5 text-gray-300 mx-auto" />
+                        )}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(permission.status)}`}>
-                        {permission.status}
-                      </span>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <div className="text-sm text-gray-900">
+                        {permission.hasPermission('DELETE') ? (
+                          <Shield className="w-5 h-5 text-green-500 mx-auto" />
+                        ) : (
+                          <Shield className="w-5 h-5 text-gray-300 mx-auto" />
+                        )}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button className="text-blue-600 hover:text-blue-900 mr-4">
-                        <Edit className="w-5 h-5" />
-                      </button>
-                      <button className="text-red-600 hover:text-red-900">
-                        <Trash2 className="w-5 h-5" />
-                      </button>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <div className="text-sm text-gray-900">
+                        {permission.hasPermission('APPROVE') ? (
+                          <Shield className="w-5 h-5 text-green-500 mx-auto" />
+                        ) : (
+                          <Shield className="w-5 h-5 text-gray-300 mx-auto" />
+                        )}
+                      </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

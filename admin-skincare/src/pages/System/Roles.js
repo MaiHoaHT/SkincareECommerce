@@ -1,37 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit, Trash2, Users } from 'lucide-react';
+import { roleService } from '../../services/roleService';
+import { useAuth } from 'react-oidc-context';
+import { setAuthToken } from '../../services/api';
 
 const Roles = () => {
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-
-  // Placeholder data
-  const mockRoles = [
-    { 
-      id: 1, 
-      name: 'Admin', 
-      description: 'Quản trị viên hệ thống', 
-      userCount: 2,
-      permissions: ['Quản lý người dùng', 'Quản lý vai trò', 'Quản lý quyền hạn']
-    },
-    { 
-      id: 2, 
-      name: 'Manager', 
-      description: 'Quản lý cửa hàng', 
-      userCount: 5,
-      permissions: ['Quản lý sản phẩm', 'Quản lý đơn hàng', 'Quản lý khách hàng']
-    },
-    // Add more mock data as needed
-  ];
+  const auth = useAuth();
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setRoles(mockRoles);
+    if (auth.user) {
+      setAuthToken(auth.user.access_token);
+      fetchRoles();
+    }
+  }, [auth.user]);
+
+  const fetchRoles = async () => {
+    try {
+      setLoading(true);
+      const data = await roleService.getRoles();
+      setRoles(data);
+      setError(null);
+    } catch (err) {
+      setError('Không thể tải danh sách vai trò. Vui lòng thử lại sau.');
+      console.error('Error fetching roles:', err);
+    } finally {
       setLoading(false);
-    }, 1000);
-  }, []);
+    }
+  };
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -39,8 +38,24 @@ const Roles = () => {
 
   const filteredRoles = roles.filter(role =>
     role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    role.description.toLowerCase().includes(searchTerm.toLowerCase())
+    (role.description && role.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const handleDelete = async (roleId) => {
+    if (window.confirm('Bạn có chắc chắn muốn xóa vai trò này?')) {
+      try {
+        await roleService.deleteRole(roleId);
+        setRoles(roles.filter(role => role.id !== roleId));
+      } catch (err) {
+        setError('Không thể xóa vai trò. Vui lòng thử lại sau.');
+        console.error('Error deleting role:', err);
+      }
+    }
+  };
+
+  if (!auth.user) {
+    return null;
+  }
 
   return (
     <div className="space-y-6">
@@ -66,71 +81,51 @@ const Roles = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên vai trò</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mô tả</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Số người dùng</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quyền hạn</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {loading ? (
+        {loading ? (
+          <div className="p-4 text-center text-gray-500">Đang tải...</div>
+        ) : error ? (
+          <div className="p-4 text-center text-red-500">{error}</div>
+        ) : filteredRoles.length === 0 ? (
+          <div className="p-4 text-center text-gray-500">Không tìm thấy vai trò nào</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
                 <tr>
-                  <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
-                    Đang tải...
-                  </td>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên vai trò</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mô tả</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
                 </tr>
-              ) : filteredRoles.length === 0 ? (
-                <tr>
-                  <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
-                    Không tìm thấy vai trò
-                  </td>
-                </tr>
-              ) : (
-                filteredRoles.map((role) => (
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredRoles.map((role) => (
                   <tr key={role.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{role.name}</div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">{role.description}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <Users className="w-4 h-4 mr-1" />
-                        {role.userCount}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-wrap gap-1">
-                        {role.permissions.map((permission, index) => (
-                          <span
-                            key={index}
-                            className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full"
-                          >
-                            {permission}
-                          </span>
-                        ))}
-                      </div>
+                      <div className="text-sm text-gray-900">{role.description || 'Không có mô tả'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button className="text-blue-600 hover:text-blue-900 mr-4">
+                      <button
+                        className="text-blue-600 hover:text-blue-900 mr-4"
+                        onClick={() => {/* TODO: Implement edit role */}}
+                      >
                         <Edit className="w-5 h-5" />
                       </button>
-                      <button className="text-red-600 hover:text-red-900">
+                      <button
+                        className="text-red-600 hover:text-red-900"
+                        onClick={() => handleDelete(role.id)}
+                      >
                         <Trash2 className="w-5 h-5" />
                       </button>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

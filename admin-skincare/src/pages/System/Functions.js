@@ -1,39 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit, Trash2, Code } from 'lucide-react';
+import { functionService } from '../../services/functionService';
+import { useAuth } from 'react-oidc-context';
+import { setAuthToken } from '../../services/api';
 
 const Functions = () => {
   const [functions, setFunctions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-
-  // Placeholder data
-  const mockFunctions = [
-    { 
-      id: 1, 
-      name: 'Quản lý người dùng', 
-      code: 'USER_MANAGEMENT',
-      description: 'Quản lý thông tin người dùng hệ thống',
-      module: 'System',
-      status: 'Active'
-    },
-    { 
-      id: 2, 
-      name: 'Quản lý sản phẩm', 
-      code: 'PRODUCT_MANAGEMENT',
-      description: 'Quản lý thông tin sản phẩm',
-      module: 'Products',
-      status: 'Active'
-    },
-    // Add more mock data as needed
-  ];
+  const auth = useAuth();
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setFunctions(mockFunctions);
+    if (auth.user) {
+      setAuthToken(auth.user.access_token);
+      fetchFunctions();
+    }
+  }, [auth.user]);
+
+  const fetchFunctions = async () => {
+    try {
+      setLoading(true);
+      const data = await functionService.getFunctions();
+      setFunctions(data);
+      setError(null);
+    } catch (err) {
+      setError('Không thể tải danh sách chức năng. Vui lòng thử lại sau.');
+      console.error('Error fetching functions:', err);
+    } finally {
       setLoading(false);
-    }, 1000);
-  }, []);
+    }
+  };
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -41,20 +38,25 @@ const Functions = () => {
 
   const filteredFunctions = functions.filter(func =>
     func.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    func.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    func.description.toLowerCase().includes(searchTerm.toLowerCase())
+    func.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (func.url && func.url.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Active':
-        return 'bg-green-100 text-green-800';
-      case 'Inactive':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  const handleDelete = async (functionId) => {
+    if (window.confirm('Bạn có chắc chắn muốn xóa chức năng này?')) {
+      try {
+        await functionService.deleteFunction(functionId);
+        setFunctions(functions.filter(func => func.id !== functionId));
+      } catch (err) {
+        setError('Không thể xóa chức năng. Vui lòng thử lại sau.');
+        console.error('Error deleting function:', err);
+      }
     }
   };
+
+  if (!auth.user) {
+    return null;
+  }
 
   return (
     <div className="space-y-6">
@@ -80,68 +82,63 @@ const Functions = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên chức năng</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã chức năng</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mô tả</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Module</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {loading ? (
+        {loading ? (
+          <div className="p-4 text-center text-gray-500">Đang tải...</div>
+        ) : error ? (
+          <div className="p-4 text-center text-red-500">{error}</div>
+        ) : filteredFunctions.length === 0 ? (
+          <div className="p-4 text-center text-gray-500">Không tìm thấy chức năng nào</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
                 <tr>
-                  <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
-                    Đang tải...
-                  </td>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên chức năng</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">URL</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Icon</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thứ tự</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
                 </tr>
-              ) : filteredFunctions.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
-                    Không tìm thấy chức năng
-                  </td>
-                </tr>
-              ) : (
-                filteredFunctions.map((func) => (
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredFunctions.map((func) => (
                   <tr key={func.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{func.name}</div>
+                      <div className="text-sm font-medium text-gray-900">{func.id}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <Code className="w-4 h-4 mr-1" />
-                        {func.code}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">{func.description}</div>
+                      <div className="text-sm text-gray-900">{func.name}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{func.module}</div>
+                      <div className="text-sm text-gray-900">{func.url || '-'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(func.status)}`}>
-                        {func.status}
-                      </span>
+                      <div className="text-sm text-gray-900">{func.icon || '-'}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{func.sortOrder}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button className="text-blue-600 hover:text-blue-900 mr-4">
+                      <button
+                        className="text-blue-600 hover:text-blue-900 mr-4"
+                        onClick={() => {/* TODO: Implement edit function */}}
+                      >
                         <Edit className="w-5 h-5" />
                       </button>
-                      <button className="text-red-600 hover:text-red-900">
+                      <button
+                        className="text-red-600 hover:text-red-900"
+                        onClick={() => handleDelete(func.id)}
+                      >
                         <Trash2 className="w-5 h-5" />
                       </button>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
