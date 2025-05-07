@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using SkincareWeb.BackendServer.Helpers;
 using SkincareWeb.ViewModels.Product;
+using SkincareWeb.ViewModels.Systems;
 using SkincareWebBackend.API.Data;
 using SkincareWebBackend.API.Data.Entities;
 
@@ -30,6 +31,28 @@ namespace SkincareWeb.BackendServer.Controllers
                 IsHot = p.IsHot,
             }).ToListAsync();
             return Ok(productQuickViewModel);
+        }
+        [HttpGet("filter")]
+        public async Task<IActionResult> GetProductsPaging(string filter, int pageIndex, int pageSize)
+        {
+            var query = _context.Products.AsQueryable();
+            if (!string.IsNullOrEmpty(filter))
+            {
+                query = query.Where(x => x.Name.Contains(filter)
+                || x.Description.Contains(filter) || x.SeoAlias.Contains(filter));
+            }
+            var totalRecords = await query.CountAsync();
+            var items = await query.Skip((pageIndex - 1) * pageSize)
+                .Take(pageSize).ToListAsync();
+
+            var data = items.Select(c => CreateProductQuickViewModel(c)).ToList();
+
+            var pagination = new Pagination<ProductQuickViewModel>
+            {
+                Items = data,
+                TotalRecords = totalRecords,
+            };
+            return Ok(pagination);
         }
 
         // url get: http://localhost:7261/api/products/1
@@ -221,7 +244,19 @@ namespace SkincareWeb.BackendServer.Controllers
 
             return BadRequest(new ApiBadRequestResponse("Fail to delete product"));
         }
-
+        private static ProductQuickViewModel CreateProductQuickViewModel(Product p)
+        {
+            return new ProductQuickViewModel()
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Price = p.Price,
+                Discount = p.Discount,
+                ImageUrl = p.ImageUrl,
+                IsFeature = p.IsFeature,
+                IsHot = p.IsHot
+            };
+        }
     }
 }
 
