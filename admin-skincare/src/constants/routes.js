@@ -2,6 +2,7 @@ const routes = {
     dashboard: '/',
     products: '/products',
     productList: '/products/list',
+    productForm: '/products/new',
     categories: '/products/categories',
     brands: '/products/brands',
     orders: '/orders',
