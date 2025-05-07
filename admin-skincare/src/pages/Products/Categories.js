@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { categoryService } from '../../services/categoryService';
 import { useAuth } from 'react-oidc-context';
 import { setAuthToken } from '../../services/api';
-import { message, Input, Table, Button, Space, Card } from 'antd';
+import { message, Input, Table, Button, Space, Card, Spin, Modal } from 'antd';
 import debounce from 'lodash/debounce';
 
 const Categories = () => {
@@ -70,16 +70,23 @@ const Categories = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa danh mục này?')) {
-      try {
-        await categoryService.deleteCategory(id);
-        message.success('Xóa danh mục thành công');
-        fetchCategories();
-      } catch (err) {
-        message.error(err.message || 'Không thể xóa danh mục. Vui lòng thử lại sau.');
-        console.error('Error deleting category:', err);
+    Modal.confirm({
+      title: 'Xác nhận xóa',
+      content: 'Bạn có chắc chắn muốn xóa danh mục này?',
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          await categoryService.deleteCategory(id);
+          message.success('Xóa danh mục thành công');
+          fetchCategories();
+        } catch (err) {
+          message.error(err.message || 'Không thể xóa danh mục. Vui lòng thử lại sau.');
+          console.error('Error deleting category:', err);
+        }
       }
-    }
+    });
   };
 
   const handleEdit = (id) => {
