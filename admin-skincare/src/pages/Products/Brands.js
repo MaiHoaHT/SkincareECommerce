@@ -1,109 +1,237 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { brandService } from '../../services/brandService';
+import { useAuth } from 'react-oidc-context';
+import { setAuthToken } from '../../services/api';
+import { message, Input, Table, Button, Space, Card, Spin, Modal } from 'antd';
+import debounce from 'lodash/debounce';
 
-const Brands = () => {
-  const [brands, setBrands] = useState([]);
+// Component for lazy loaded image with loading state
+const LazyImage = ({ src, alt }) => {
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-
-  // Placeholder data
-  const mockBrands = [
-    { id: 1, name: 'Flora', description: 'Thương hiệu mỹ phẩm thiên nhiên', productCount: 45 },
-    { id: 2, name: 'Beauty', description: 'Thương hiệu mỹ phẩm cao cấp', productCount: 35 },
-    // Add more mock data as needed
-  ];
-
-  useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setBrands(mockBrands);
-      setLoading(false);
-    }, 1000);
-  }, []);
-
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const filteredBrands = brands.filter(brand =>
-    brand.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    brand.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const [error, setError] = useState(false);
 
   return (
-    <div className="space-y-6">
+    <div className="relative w-12 h-12">
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Spin size="small" />
+        </div>
+      )}
+      <img
+        src={src}
+        alt={alt}
+        className={`w-12 h-12 object-contain ${loading ? 'opacity-0' : 'opacity-100'}`}
+        loading="lazy"
+        onLoad={() => setLoading(false)}
+        onError={() => {
+          setLoading(false);
+          setError(true);
+        }}
+      />
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-400">
+          <span className="text-xs">No image</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const Brands = () => {
+  const navigate = useNavigate();
+  const auth = useAuth();
+  const [brands, setBrands] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0
+  });
+
+  // Tạo debounced search function
+  const debouncedSearch = useCallback(
+    debounce((value) => {
+      setPagination(prev => ({ ...prev, current: 1 }));
+      fetchBrands(value);
+    }, 500),
+    []
+  );
+
+  useEffect(() => {
+    if (auth.user) {
+      setAuthToken(auth.user.access_token);
+      fetchBrands();
+    }
+  }, [auth.user]);
+
+  const fetchBrands = async (search = searchTerm) => {
+    try {
+      setLoading(true);
+      const response = await brandService.getBrandsPaging(
+        search,
+        pagination.current,
+        pagination.pageSize
+      );
+      setBrands(response.items);
+      setPagination(prev => ({
+        ...prev,
+        total: response.totalCount
+      }));
+      setError(null);
+    } catch (err) {
+      setError('Không thể tải danh sách thương hiệu. Vui lòng thử lại sau.');
+      console.error('Error fetching brands:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    debouncedSearch(value);
+  };
+
+  const handleTableChange = (pagination) => {
+    setPagination(pagination);
+    fetchBrands();
+  };
+
+  const handleDelete = async (id) => {
+    Modal.confirm({
+      title: 'Xác nhận xóa',
+      content: 'Bạn có chắc chắn muốn xóa thương hiệu này?',
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          await brandService.deleteBrand(id);
+          message.success('Xóa thương hiệu thành công');
+          fetchBrands();
+        } catch (err) {
+          message.error(err.message || 'Không thể xóa thương hiệu. Vui lòng thử lại sau.');
+          console.error('Error deleting brand:', err);
+        }
+      }
+    });
+  };
+
+  const handleEdit = (id) => {
+    navigate(`/products/brands/edit/${id}`);
+  };
+
+  const handleAddNew = () => {
+    navigate('/products/brands/new');
+  };
+
+  const columns = [
+    {
+      title: 'Tên thương hiệu',
+      dataIndex: 'title',
+      key: 'title',
+      sorter: true,
+    },
+    {
+      title: 'Banner',
+      dataIndex: 'banner',
+      key: 'banner',
+      render: (banner) => banner ? (
+        <LazyImage src={banner} alt="Banner" />
+      ) : (
+        <div className="w-12 h-12 flex items-center justify-center bg-gray-100 text-gray-400">
+          <span className="text-xs">No image</span>
+        </div>
+      ),
+      width: 100,
+    },
+    {
+      title: 'Mô tả',
+      dataIndex: 'description',
+      key: 'description',
+      ellipsis: true,
+    },
+    {
+      title: 'Alias',
+      dataIndex: 'alias',
+      key: 'alias',
+      sorter: true,
+    },
+    {
+      title: 'Thao tác',
+      key: 'action',
+      width: 120,
+      render: (_, record) => (
+        <Space size="middle">
+          <Button
+            type="text"
+            icon={<Edit className="w-4 h-4" />}
+            onClick={() => handleEdit(record.id)}
+          />
+          <Button
+            type="text"
+            danger
+            icon={<Trash2 className="w-4 h-4" />}
+            onClick={() => handleDelete(record.id)}
+          />
+        </Space>
+      ),
+    },
+  ];
+
+  if (!auth.user) {
+    return null;
+  }
+
+  return (
+    <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Quản lý thương hiệu</h1>
-        <button className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-600">
-          <Plus className="w-5 h-5 mr-2" />
+        <h1 className="text-2xl font-semibold text-gray-900">Quản lý thương hiệu</h1>
+        <Button 
+          type="primary"
+          icon={<Plus className="w-4 h-4" />}
+          onClick={handleAddNew}
+        >
           Thêm thương hiệu
-        </button>
+        </Button>
       </div>
 
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-4 border-b">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Tìm kiếm thương hiệu..."
-              className="pl-10 pr-4 py-2 w-full border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={searchTerm}
-              onChange={handleSearch}
-            />
-          </div>
+      <Card>
+        <div className="mb-4">
+          <Input
+            placeholder="Tìm kiếm thương hiệu..."
+            prefix={<Search className="text-gray-400 w-4 h-4" />}
+            value={searchTerm}
+            onChange={handleSearch}
+            allowClear
+            className="max-w-md"
+          />
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên thương hiệu</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mô tả</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Số sản phẩm</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {loading ? (
-                <tr>
-                  <td colSpan="4" className="px-6 py-4 text-center text-gray-500">
-                    Đang tải...
-                  </td>
-                </tr>
-              ) : filteredBrands.length === 0 ? (
-                <tr>
-                  <td colSpan="4" className="px-6 py-4 text-center text-gray-500">
-                    Không tìm thấy thương hiệu
-                  </td>
-                </tr>
-              ) : (
-                filteredBrands.map((brand) => (
-                  <tr key={brand.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{brand.name}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">{brand.description}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{brand.productCount}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button className="text-blue-600 hover:text-blue-900 mr-4">
-                        <Edit className="w-5 h-5" />
-                      </button>
-                      <button className="text-red-600 hover:text-red-900">
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+        <Table
+          columns={columns}
+          dataSource={brands.map(brand => ({
+            ...brand,
+            key: brand.id
+          }))}
+          rowKey="id"
+          pagination={{
+            ...pagination,
+            showSizeChanger: true,
+            showTotal: (total) => `Tổng số ${total} thương hiệu`,
+          }}
+          loading={loading}
+          onChange={handleTableChange}
+          locale={{
+            emptyText: error || 'Không có dữ liệu'
+          }}
+          scroll={{ x: 800 }}
+        />
+      </Card>
     </div>
   );
 };
