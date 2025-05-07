@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Plus, Edit, Trash2, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { roleService } from '../../services/roleService';
 import { useAuth } from 'react-oidc-context';
 import { setAuthToken } from '../../services/api';
+import { message, Input, Table, Button, Space, Card, Spin, Modal } from 'antd';
 
 const Roles = () => {
   const [roles, setRoles] = useState([]);
@@ -42,15 +44,23 @@ const Roles = () => {
   );
 
   const handleDelete = async (roleId) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa vai trò này?')) {
-      try {
-        await roleService.deleteRole(roleId);
-        setRoles(roles.filter(role => role.id !== roleId));
-      } catch (err) {
-        setError('Không thể xóa vai trò. Vui lòng thử lại sau.');
-        console.error('Error deleting role:', err);
+    Modal.confirm({
+      title: 'Xác nhận xóa',
+      content: 'Bạn có chắc chắn muốn xóa vai trò này?',
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          await roleService.deleteRole(roleId);
+          message.success('Xóa vai trò thành công');
+          fetchRoles();
+        } catch (err) {
+          message.error(err.message || 'Không thể xóa vai trò. Vui lòng thử lại sau.');
+          console.error('Error deleting role:', err);
+        }
       }
-    }
+    });
   };
 
   if (!auth.user) {

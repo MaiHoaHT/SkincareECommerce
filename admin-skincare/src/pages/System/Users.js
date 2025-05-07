@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, Edit, Trash2 } from 'lucide-react';
 import { userService } from '../../services/userService';
 import { useAuth } from 'react-oidc-context';
 import { setAuthToken } from '../../services/api';
+import { message, Input, Table, Button, Space, Card, Spin, Modal } from 'antd';
 
 const Users = () => {
   const auth = useAuth();
@@ -50,15 +51,23 @@ const Users = () => {
   };
 
   const handleDelete = async (userId) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa người dùng này?')) {
-      try {
-        await userService.deleteUser(userId);
-        await fetchUsers(searchTerm);
-      } catch (err) {
-        console.error('Error deleting user:', err);
-        setError('Không thể xóa người dùng. Vui lòng thử lại sau.');
+    Modal.confirm({
+      title: 'Xác nhận xóa',
+      content: 'Bạn có chắc chắn muốn xóa người dùng này?',
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          await userService.deleteUser(userId);
+          message.success('Xóa người dùng thành công');
+          fetchUsers();
+        } catch (err) {
+          message.error(err.message || 'Không thể xóa người dùng. Vui lòng thử lại sau.');
+          console.error('Error deleting user:', err);
+        }
       }
-    }
+    });
   };
 
   const handleEdit = (userId) => {

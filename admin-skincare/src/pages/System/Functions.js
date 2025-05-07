@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Plus, Edit, Trash2, Code } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { functionService } from '../../services/functionService';
 import { useAuth } from 'react-oidc-context';
 import { setAuthToken } from '../../services/api';
+import { message, Input, Table, Button, Space, Card, Spin, Modal } from 'antd';
 
 const Functions = () => {
   const [functions, setFunctions] = useState([]);
@@ -43,15 +45,23 @@ const Functions = () => {
   );
 
   const handleDelete = async (functionId) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa chức năng này?')) {
-      try {
-        await functionService.deleteFunction(functionId);
-        setFunctions(functions.filter(func => func.id !== functionId));
-      } catch (err) {
-        setError('Không thể xóa chức năng. Vui lòng thử lại sau.');
-        console.error('Error deleting function:', err);
+    Modal.confirm({
+      title: 'Xác nhận xóa',
+      content: 'Bạn có chắc chắn muốn xóa chức năng này?',
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          await functionService.deleteFunction(functionId);
+          message.success('Xóa chức năng thành công');
+          fetchFunctions();
+        } catch (err) {
+          message.error(err.message || 'Không thể xóa chức năng. Vui lòng thử lại sau.');
+          console.error('Error deleting function:', err);
+        }
       }
-    }
+    });
   };
 
   if (!auth.user) {
