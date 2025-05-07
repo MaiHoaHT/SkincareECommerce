@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SkincareWeb.BackendServer.Helpers;
 using SkincareWeb.BackendServer.Services;
 using SkincareWeb.ViewModels.Cosmetics;
+using SkincareWeb.ViewModels.Systems;
 using SkincareWebBackend.API.Data;
 using SkincareWebBackend.API.Data.Entities;
 
@@ -72,7 +73,28 @@ namespace SkincareWeb.BackendServer.Controllers
             BrandViewModel brandVm = CreateBrandViewModel(brand);
             return Ok(brandVm);
         }
+        [HttpGet("filter")]
+        public async Task<IActionResult> GetBrandsPaging(string filter, int pageIndex, int pageSize)
+        {
+            var query = _context.Brands.AsQueryable();
+            if (!string.IsNullOrEmpty(filter))
+            {
+                query = query.Where(x => x.Title.Contains(filter)
+                || x.Alias.Contains(filter));
+            }
+            var totalRecords = await query.CountAsync();
+            var items = await query.Skip((pageIndex - 1) * pageSize)
+                .Take(pageSize).ToListAsync();
 
+            var data = items.Select(c => CreateBrandViewModel(c)).ToList();
+
+            var pagination = new Pagination<BrandViewModel>
+            {
+                Items = data,
+                TotalRecords = totalRecords,
+            };
+            return Ok(pagination);
+        }
         [HttpPut("{id}")]
         public async Task<IActionResult> PutBrand(int id, [FromBody] BrandViewModel request)
         {
@@ -118,6 +140,7 @@ namespace SkincareWeb.BackendServer.Controllers
         {
             return new BrandViewModel()
             {
+                Id = brand.Id,
                 Title = brand.Title,
                 Description = brand.Description,
                 Banner = brand.Banner,
