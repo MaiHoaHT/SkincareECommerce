@@ -11,6 +11,7 @@ import Products from './pages/Products';
 import ProductList from './pages/Products/ProductList';
 import ProductForm from './pages/Products/ProductForm';
 import Categories from './pages/Products/Categories';
+import CategoryForm from './pages/Products/CategoryForm';
 import Brands from './pages/Products/Brands';
 import Orders from './pages/Orders';
 import Customers from './pages/Customers';
@@ -39,6 +40,8 @@ function App() {
                     <Route path={routes.productList} element={<ProductList />} />
                     <Route path={routes.productForm} element={<ProductForm />} />
                     <Route path={routes.categories} element={<Categories />} />
+                    <Route path={routes.categoryForm} element={<CategoryForm />} />
+                    <Route path={routes.categoryEdit} element={<CategoryForm />} />
                     <Route path={routes.brands} element={<Brands />} />
                     <Route path={routes.orders} element={<Orders />} />
                     <Route path={routes.customers} element={<Customers />} />
