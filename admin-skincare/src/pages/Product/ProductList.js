@@ -3,7 +3,6 @@ import { Search, Plus, Edit, Trash2, Star, Flame } from 'lucide-react';
 import { productService } from '../../services/productService';
 import { useAuth } from 'react-oidc-context';
 import { setAuthToken } from '../../services/api';
-import ProductModel from '../../models/ProductModel';
 
 const ProductList = () => {
   const [products, setProducts] = useState([]);
@@ -42,8 +41,6 @@ const ProductList = () => {
   );
 
   const handleDelete = async (productId) => {
-    if (!productId) return;
-    
     if (window.confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
       try {
         await productService.deleteProduct(productId);
@@ -52,90 +49,6 @@ const ProductList = () => {
         setError('Không thể xóa sản phẩm. Vui lòng thử lại sau.');
         console.error('Error deleting product:', err);
       }
-    }
-  };
-
-  const handleToggleFeature = async (productId, currentValue) => {
-    try {
-      // Lấy thông tin sản phẩm hiện tại
-      const currentProduct = await productService.getProductById(productId);
-      
-      // Tạo instance mới với dữ liệu hiện tại và thay đổi isFeature
-      const updatedProduct = new ProductModel({
-        id: currentProduct.id,
-        name: currentProduct.name,
-        description: currentProduct.description,
-        price: currentProduct.price,
-        discount: currentProduct.discount,
-        imageUrl: currentProduct.imageUrl,
-        categoryId: currentProduct.categoryId,
-        brandId: currentProduct.brandId,
-        seoAlias: currentProduct.seoAlias,
-        quantity: currentProduct.quantity,
-        sold: currentProduct.sold,
-        status: currentProduct.status,
-        isFeature: !currentValue,
-        isHome: currentProduct.isHome,
-        isHot: currentProduct.isHot,
-        isActive: currentProduct.isActive
-      });
-
-      // Cập nhật sản phẩm
-      await productService.updateProduct(productId, updatedProduct);
-      
-      // Cập nhật state với giá trị mới
-      setProducts(prevProducts => 
-        prevProducts.map(p => 
-          p.id === productId 
-            ? { ...p, isFeature: !currentValue }
-            : p
-        )
-      );
-    } catch (err) {
-      setError('Không thể cập nhật trạng thái nổi bật. Vui lòng thử lại sau.');
-      console.error('Error updating feature status:', err);
-    }
-  };
-
-  const handleToggleHot = async (productId, currentValue) => {
-    try {
-      // Lấy thông tin sản phẩm hiện tại
-      const currentProduct = await productService.getProductById(productId);
-      
-      // Tạo instance mới với dữ liệu hiện tại và thay đổi isHot
-      const updatedProduct = new ProductModel({
-        id: currentProduct.id,
-        name: currentProduct.name,
-        description: currentProduct.description,
-        price: currentProduct.price,
-        discount: currentProduct.discount,
-        imageUrl: currentProduct.imageUrl,
-        categoryId: currentProduct.categoryId,
-        brandId: currentProduct.brandId,
-        seoAlias: currentProduct.seoAlias,
-        quantity: currentProduct.quantity,
-        sold: currentProduct.sold,
-        status: currentProduct.status,
-        isFeature: currentProduct.isFeature,
-        isHome: currentProduct.isHome,
-        isHot: !currentValue,
-        isActive: currentProduct.isActive
-      });
-
-      // Cập nhật sản phẩm
-      await productService.updateProduct(productId, updatedProduct);
-      
-      // Cập nhật state với giá trị mới
-      setProducts(prevProducts => 
-        prevProducts.map(p => 
-          p.id === productId 
-            ? { ...p, isHot: !currentValue }
-            : p
-        )
-      );
-    } catch (err) {
-      setError('Không thể cập nhật trạng thái hot. Vui lòng thử lại sau.');
-      console.error('Error updating hot status:', err);
     }
   };
 
@@ -189,7 +102,7 @@ const ProductList = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredProducts.map((product) => (
-                  <tr key={`product-${product.id}`}>
+                  <tr key={product.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <img
                         src={product.imageUrl}
@@ -207,24 +120,22 @@ const ProductList = () => {
                       <div className="text-sm text-gray-900">{product.discount}%</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <button
-                        onClick={() => handleToggleFeature(product.id, product.isFeature)}
-                        className={`p-2 rounded-full ${
-                          product.isFeature ? 'bg-yellow-100 text-yellow-500' : 'bg-gray-100 text-gray-400'
-                        } hover:bg-yellow-200 transition-colors`}
-                      >
-                        <Star className="w-5 h-5" />
-                      </button>
+                      <div className="text-sm text-gray-900">
+                        {product.isFeature ? (
+                          <Star className="w-5 h-5 text-yellow-500 mx-auto" />
+                        ) : (
+                          <Star className="w-5 h-5 text-gray-300 mx-auto" />
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <button
-                        onClick={() => handleToggleHot(product.id, product.isHot)}
-                        className={`p-2 rounded-full ${
-                          product.isHot ? 'bg-red-100 text-red-500' : 'bg-gray-100 text-gray-400'
-                        } hover:bg-red-200 transition-colors`}
-                      >
-                        <Flame className="w-5 h-5" />
-                      </button>
+                      <div className="text-sm text-gray-900">
+                        {product.isHot ? (
+                          <Flame className="w-5 h-5 text-red-500 mx-auto" />
+                        ) : (
+                          <Flame className="w-5 h-5 text-gray-300 mx-auto" />
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
@@ -251,4 +162,4 @@ const ProductList = () => {
   );
 };
 
-export default ProductList;
+export default ProductList; 
