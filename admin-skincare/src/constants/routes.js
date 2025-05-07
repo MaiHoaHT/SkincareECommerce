@@ -7,6 +7,8 @@ const routes = {
     categoryForm: '/products/categories/new',
     categoryEdit: '/products/categories/edit/:id',
     brands: '/products/brands',
+    brandForm: '/products/brands/new',
+    brandEdit: '/products/brands/edit/:id',
     orders: '/orders',
     customers: '/customers',
     system: '/system',

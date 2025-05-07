@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import { useDropzone } from 'react-dropzone';
 import { productService } from '../../services/productService';
+import { categoryService } from '../../services/categoryService';
+import { brandService } from '../../services/brandService';
 import ProductModel from '../../models/ProductModel';
 import { 
   Form, 
@@ -15,14 +14,14 @@ import {
   Select, 
   Switch, 
   Button, 
-  Upload, 
   message, 
   Card, 
   Tabs,
   Space,
   Row,
   Col,
-  Divider
+  Divider,
+  App
 } from 'antd';
 import { 
   SaveOutlined, 
@@ -31,62 +30,18 @@ import {
   CloseOutlined 
 } from '@ant-design/icons';
 
-// Schema validation
-const schema = yup.object({
-  name: yup.string().required('Tên sản phẩm là bắt buộc'),
-  description: yup.string().required('Mô tả là bắt buộc'),
-  price: yup.number()
-    .typeError('Giá phải là số')
-    .required('Giá là bắt buộc')
-    .min(0, 'Giá không được âm'),
-  discount: yup.number()
-    .typeError('Giảm giá phải là số')
-    .min(0, 'Giảm giá không được âm')
-    .max(100, 'Giảm giá không được vượt quá 100%'),
-  quantity: yup.number()
-    .typeError('Số lượng phải là số')
-    .required('Số lượng là bắt buộc')
-    .min(0, 'Số lượng không được âm'),
-  categoryId: yup.string().required('Danh mục là bắt buộc'),
-  brandId: yup.string().required('Thương hiệu là bắt buộc'),
-  seoAlias: yup.string().required('SEO Alias là bắt buộc'),
-  seoTitle: yup.string().required('SEO Title là bắt buộc'),
-  seoDescription: yup.string().required('SEO Description là bắt buộc'),
-}).required();
-
 const ProductForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { message: messageApi } = App.useApp();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
-  const [uploadingImages, setUploadingImages] = useState(false);
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
+  const [images, setImages] = useState([]);
   const [form] = Form.useForm();
 
-  const { register, handleSubmit, formState: { errors }, setValue, watch, control } = useForm({
-    resolver: yupResolver(schema),
-    defaultValues: {
-      name: '',
-      description: '',
-      price: '',
-      discount: '',
-      quantity: '',
-      categoryId: '',
-      brandId: '',
-      seoAlias: '',
-      seoTitle: '',
-      seoDescription: '',
-      isFeature: false,
-      isHot: false,
-      isActive: true,
-      images: []
-    }
-  });
-
   const handleImageUpload = async (acceptedFiles) => {
-    setUploadingImages(true);
     try {
       const uploadedImages = await Promise.all(acceptedFiles.map(file => {
         return new Promise(resolve => {
@@ -101,12 +56,10 @@ const ProductForm = () => {
         });
       }));
       
-      setValue('images', [...watch('images'), ...uploadedImages]);
+      setImages(prev => [...prev, ...uploadedImages]);
     } catch (err) {
-      setError('Không thể tải lên hình ảnh');
+      messageApi.error('Không thể tải lên hình ảnh');
       console.error('Error uploading images:', err);
-    } finally {
-      setUploadingImages(false);
     }
   };
 
@@ -120,7 +73,35 @@ const ProductForm = () => {
 
   const handleEditorChange = (event, editor) => {
     const data = editor.getData();
-    setValue('description', data);
+    form.setFieldValue('description', data);
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const response = await categoryService.getCategories();
+      const categoryOptions = response.map(category => ({
+        value: category.id,
+        label: category.name
+      }));
+      setCategories(categoryOptions);
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+      messageApi.error('Không thể tải danh sách danh mục');
+    }
+  };
+
+  const fetchBrands = async () => {
+    try {
+      const response = await brandService.getBrands();
+      const brandOptions = response.map(brand => ({
+        value: brand.id,
+        label: brand.title
+      }));
+      setBrands(brandOptions);
+    } catch (err) {
+      console.error('Error fetching brands:', err);
+      messageApi.error('Không thể tải danh sách thương hiệu');
+    }
   };
 
   useEffect(() => {
@@ -131,41 +112,16 @@ const ProductForm = () => {
     fetchBrands();
   }, [id]);
 
-  const fetchCategories = async () => {
-    try {
-      // TODO: Implement category fetching
-      const mockCategories = [
-        { value: '1', label: 'Skincare' },
-        { value: '2', label: 'Makeup' },
-        { value: '3', label: 'Haircare' }
-      ];
-      setCategories(mockCategories);
-    } catch (err) {
-      console.error('Error fetching categories:', err);
-    }
-  };
-
-  const fetchBrands = async () => {
-    try {
-      // TODO: Implement brand fetching
-      const mockBrands = [
-        { value: '1', label: 'La Roche-Posay' },
-        { value: '2', label: 'CeraVe' },
-        { value: '3', label: 'The Ordinary' }
-      ];
-      setBrands(mockBrands);
-    } catch (err) {
-      console.error('Error fetching brands:', err);
-    }
-  };
-
   const fetchProduct = async () => {
     try {
       setLoading(true);
       const product = await productService.getProductById(id);
       form.setFieldsValue(product);
+      if (product.imageUrl) {
+        setImages([{ id: '1', url: product.imageUrl }]);
+      }
     } catch (err) {
-      setError('Không thể tải thông tin sản phẩm');
+      messageApi.error('Không thể tải thông tin sản phẩm');
       console.error('Error fetching product:', err);
     } finally {
       setLoading(false);
@@ -173,40 +129,50 @@ const ProductForm = () => {
   };
 
   const handleRemoveImage = (imageId) => {
-    setValue('images', watch('images').filter(img => img.id !== imageId));
+    setImages(prev => prev.filter(img => img.id !== imageId));
   };
 
   const onSubmit = async (values) => {
     try {
       setLoading(true);
-      const productData = new ProductModel(values);
       
+      // Create ProductModel instance
+      const productModel = new ProductModel({
+        name: values.name,
+        description: values.description,
+        price: Number(values.price),
+        discount: Number(values.discount || 0),
+        quantity: Number(values.quantity),
+        categoryId: values.categoryId,
+        brandId: values.brandId,
+        seoAlias: values.seoAlias,
+        seoTitle: values.seoTitle,
+        seoDescription: values.seoDescription,
+        imageUrl: images[0]?.url || '',
+        isFeature: values.isFeature || false,
+        isHot: values.isHot || false,
+        isActive: values.isActive || true,
+        status: values.isActive ? 'Active' : 'Inactive',
+        createDate: new Date().toISOString(),
+        lastModifiedDate: new Date().toISOString()
+      });
+
       if (id) {
-        await productService.updateProduct(id, productData);
-        message.success('Cập nhật sản phẩm thành công');
+        await productService.updateProduct(id, productModel);
+        messageApi.success('Cập nhật sản phẩm thành công');
       } else {
-        await productService.createProduct(productData);
-        message.success('Thêm sản phẩm thành công');
+        await productService.createProduct(productModel);
+        messageApi.success('Thêm sản phẩm thành công');
       }
       
-      setTimeout(() => {
-        navigate('/products');
-      }, 2000);
+      navigate('/products');
     } catch (err) {
-      message.error(err.message || 'Không thể lưu sản phẩm. Vui lòng thử lại sau.');
       console.error('Error saving product:', err);
+      messageApi.error(err.message || 'Không thể lưu sản phẩm. Vui lòng thử lại sau.');
     } finally {
       setLoading(false);
     }
   };
-
-  if (loading && !watch('name')) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
 
   const items = [
     {
@@ -221,7 +187,9 @@ const ProductForm = () => {
             initialValues={{
               isFeature: false,
               isHot: false,
-              isActive: true
+              isActive: true,
+              discount: 0,
+              quantity: 0
             }}
           >
             <Form.Item
@@ -239,7 +207,6 @@ const ProductForm = () => {
             >
               <CKEditor
                 editor={ClassicEditor}
-                data={watch('description')}
                 onChange={handleEditorChange}
                 config={{
                   toolbar: [
@@ -313,6 +280,9 @@ const ProductForm = () => {
                   <Select
                     options={categories}
                     placeholder="Chọn danh mục"
+                    loading={loading}
+                    showSearch
+                    optionFilterProp="label"
                   />
                 </Form.Item>
               </Col>
@@ -325,6 +295,9 @@ const ProductForm = () => {
                   <Select
                     options={brands}
                     placeholder="Chọn thương hiệu"
+                    loading={loading}
+                    showSearch
+                    optionFilterProp="label"
                   />
                 </Form.Item>
               </Col>
@@ -370,9 +343,9 @@ const ProductForm = () => {
               </div>
             </Form.Item>
 
-            {watch('images')?.length > 0 && (
+            {images.length > 0 && (
               <Row gutter={[16, 16]} className="mt-4">
-                {watch('images').map((image) => (
+                {images.map((image) => (
                   <Col span={4} key={image.id}>
                     <div className="relative group aspect-square">
                       <img
@@ -436,8 +409,7 @@ const ProductForm = () => {
         />
       </div>
 
-      {error && message.error(error)}
-      {success && message.success(success)}
+      {error && messageApi.error(error)}
 
       <Tabs items={items} />
 
@@ -446,7 +418,15 @@ const ProductForm = () => {
           type="primary"
           icon={<SaveOutlined />}
           loading={loading}
-          onClick={() => form.submit()}
+          onClick={() => {
+            form.validateFields()
+              .then(values => {
+                onSubmit(values);
+              })
+              .catch(error => {
+                console.error('Validation failed:', error);
+              });
+          }}
         >
           {id ? 'Cập nhật' : 'Thêm mới'}
         </Button>
@@ -455,4 +435,11 @@ const ProductForm = () => {
   );
 };
 
-export default ProductForm;
+// Wrap the component with App provider
+const ProductFormWithApp = () => (
+  <App>
+    <ProductForm />
+  </App>
+);
+
+export default ProductFormWithApp;
