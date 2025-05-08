@@ -3,6 +3,7 @@ const routes = {
     products: '/products',
     productList: '/products/list',
     productForm: '/products/new',
+    productEdit: '/products/edit/:id',
     categories: '/products/categories',
     categoryForm: '/products/categories/new',
     categoryEdit: '/products/categories/edit/:id',

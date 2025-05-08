@@ -38,9 +38,7 @@ namespace SkincareWeb.ViewModels.Cosmetics
             RuleFor(x => x.ImageUrl)
                 .NotNull()
                 .NotEmpty()
-                .WithMessage(string.Format(Messages.Required, "URL hình ảnh"))
-                .Must(url => Uri.IsWellFormedUriString(url, UriKind.Absolute))
-                .WithMessage(string.Format(Messages.Invalid, "URL hình ảnh"));
+                .WithMessage(string.Format(Messages.Required, "URL hình ảnh"));
 
             // Danh mục sản phẩm
             RuleFor(x => x.CategoryId)

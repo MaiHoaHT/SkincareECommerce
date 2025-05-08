@@ -116,7 +116,10 @@ const ProductForm = () => {
     try {
       setLoading(true);
       const product = await productService.getProductById(id);
-      form.setFieldsValue(product);
+      form.setFieldsValue({
+        ...product,
+        description: product.description
+      });
       if (product.imageUrl) {
         setImages([{ id: '1', url: product.imageUrl }]);
       }
@@ -138,6 +141,7 @@ const ProductForm = () => {
       
       // Create ProductModel instance
       const productModel = new ProductModel({
+        id: id || undefined,
         name: values.name,
         description: values.description,
         price: Number(values.price),
@@ -146,16 +150,21 @@ const ProductForm = () => {
         categoryId: values.categoryId,
         brandId: values.brandId,
         seoAlias: values.seoAlias,
-        seoTitle: values.seoTitle,
-        seoDescription: values.seoDescription,
         imageUrl: images[0]?.url || '',
         isFeature: values.isFeature || false,
         isHot: values.isHot || false,
         isActive: values.isActive || true,
-        status: values.isActive ? 'Active' : 'Inactive',
-        createDate: new Date().toISOString(),
+        status: values.isActive || true,
+        isHome: values.isHome || false,
+        sold: values.sold || 0,
+        createDate: id ? undefined : new Date().toISOString(),
         lastModifiedDate: new Date().toISOString()
       });
+
+      // Log data before sending
+      console.log('Form Values:', values);
+      console.log('Product Model:', JSON.stringify(productModel, null, 2));
+      console.log('Images:', images);
 
       if (id) {
         await productService.updateProduct(id, productModel);
@@ -165,10 +174,14 @@ const ProductForm = () => {
         messageApi.success('Thêm sản phẩm thành công');
       }
       
-      navigate('/products');
+      navigate('/products/list');
     } catch (err) {
       console.error('Error saving product:', err);
-      messageApi.error(err.message || 'Không thể lưu sản phẩm. Vui lòng thử lại sau.');
+      if (err.response?.data?.errors) {
+        messageApi.error(err.response.data.errors.join(', '));
+      } else {
+        messageApi.error(err.message || 'Không thể lưu sản phẩm. Vui lòng thử lại sau.');
+      }
     } finally {
       setLoading(false);
     }
@@ -207,6 +220,7 @@ const ProductForm = () => {
             >
               <CKEditor
                 editor={ClassicEditor}
+                data={form.getFieldValue('description')}
                 onChange={handleEditorChange}
                 config={{
                   toolbar: [
@@ -375,22 +389,6 @@ const ProductForm = () => {
             >
               <Input />
             </Form.Item>
-
-            <Form.Item
-              label="SEO Title"
-              name="seoTitle"
-              rules={[{ required: true, message: 'Vui lòng nhập SEO Title' }]}
-            >
-              <Input />
-            </Form.Item>
-
-            <Form.Item
-              label="SEO Description"
-              name="seoDescription"
-              rules={[{ required: true, message: 'Vui lòng nhập SEO Description' }]}
-            >
-              <Input.TextArea rows={4} />
-            </Form.Item>
           </Form>
         </Card>
       )
@@ -405,7 +403,7 @@ const ProductForm = () => {
         </h1>
         <Button
           icon={<CloseOutlined />}
-          onClick={() => navigate('/products')}
+          onClick={() => navigate('/products/list')}
         />
       </div>
 

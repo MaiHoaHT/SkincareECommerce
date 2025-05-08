@@ -42,6 +42,7 @@ function App() {
                       <Route path={routes.products} element={<Products />} />
                       <Route path={routes.productList} element={<ProductList />} />
                       <Route path={routes.productForm} element={<ProductForm />} />
+                      <Route path={routes.productEdit} element={<ProductForm />} />
                       <Route path={routes.categories} element={<Categories />} />
                       <Route path={routes.categoryForm} element={<CategoryForm />} />
                       <Route path={routes.categoryEdit} element={<CategoryForm />} />
