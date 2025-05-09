@@ -2,11 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, Edit, Trash2, Star, Flame, Filter, ChevronDown, ChevronUp } from 'lucide-react';
 import { productService } from '../../services/productService';
+import { categoryService } from '../../services/categoryService';
+import { brandService } from '../../services/brandService';
 import { useAuth } from 'react-oidc-context';
 import { setAuthToken } from '../../services/api';
 import ProductModel from '../../models/ProductModel';
 import routes from '../../constants/routes';
-import { Input, Table, Button, Space, Card, Spin, Modal, App } from 'antd';
+import { Input, Table, Button, Space, Card, Spin, Modal, App, Select } from 'antd';
 import debounce from 'lodash/debounce';
 
 const ProductList = () => {
@@ -17,6 +19,8 @@ const ProductList = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
   const [filters, setFilters] = useState({
     category: '',
     brand: '',
@@ -48,8 +52,30 @@ const ProductList = () => {
     if (auth.user) {
       setAuthToken(auth.user.access_token);
       fetchProducts();
+      fetchCategories();
+      fetchBrands();
     }
   }, [auth.user]);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await categoryService.getCategories();
+      setCategories(response);
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+      message.error('Không thể tải danh sách danh mục');
+    }
+  };
+
+  const fetchBrands = async () => {
+    try {
+      const response = await brandService.getBrands();
+      setBrands(response);
+    } catch (err) {
+      console.error('Error fetching brands:', err);
+      message.error('Không thể tải danh sách thương hiệu');
+    }
+  };
 
   const fetchProducts = async (search = searchTerm) => {
     try {
@@ -57,7 +83,9 @@ const ProductList = () => {
       const response = await productService.getProductsPaging(
         search,
         pagination.current,
-        pagination.pageSize
+        pagination.pageSize,
+        filters.category,
+        filters.brand
       );
       setProducts(response.items);
       setPagination(prev => ({
@@ -79,13 +107,13 @@ const ProductList = () => {
     debouncedSearch(value);
   };
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
+  const handleFilterChange = (name, value) => {
     setFilters(prev => ({
       ...prev,
       [name]: value
     }));
     setPagination(prev => ({ ...prev, current: 1 }));
+    fetchProducts();
   };
 
   const handleSort = (key) => {
@@ -218,6 +246,27 @@ const ProductList = () => {
       console.error('Error updating hot status:', err);
     }
   };
+  const handleToggleActive = async (productId, currentValue) => {
+    try {
+      const product = await productService.getProductById(productId);
+      const updatedProduct = new ProductModel({
+        ...product,
+        isActive: !currentValue
+      });
+      await productService.updateProduct(productId, updatedProduct);
+      message.success('Cập nhật trạng thái nổi bật thành công');
+      setProducts(prevProducts => 
+        prevProducts.map(p => 
+          p.id === productId 
+            ? { ...p, isActive: !currentValue }
+            : p
+        )
+      );
+    } catch (err) {
+      message.error('Không thể cập nhật trạng thái kích hoạt. Vui lòng thử lại sau.');
+      console.error('Error updating feature status:', err);
+    }
+  };
 
   const handleEdit = (id) => {
     navigate(`/products/edit/${id}`);
@@ -319,6 +368,33 @@ const ProductList = () => {
       ),
     },
     {
+      title: 'Kích hoạt',
+      dataIndex: 'isActive',
+      key: 'isActive',
+      width: 80,
+      render: (isActive, record) => (
+        <Button
+          type="text"
+          style={{
+            backgroundColor: isActive ? '#FEF3C7' : '#FFFFFF',
+            borderRadius: '50%',
+            padding: '4px',
+            border: 'none'
+          }}
+          icon={
+            <Star 
+              style={{
+                color: isActive ? '#EAB308' : '#D1D5DB',
+                width: '16px',
+                height: '16px'
+              }}
+            />
+          }
+          onClick={() => handleToggleActive(record.id, isActive)}
+        />
+      ),
+    },
+    {
       title: 'Thao tác',
       key: 'action',
       width: 100,
@@ -345,46 +421,114 @@ const ProductList = () => {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-gray-900">Quản lý sản phẩm</h1>
-        <Button 
+    <div className="max-w-7xl mx-auto p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Quản lý sản phẩm</h1>
+        <Button
           type="primary"
-          icon={<Plus className="w-4 h-4" />}
+          icon={<Plus />}
           onClick={handleAddNew}
         >
           Thêm sản phẩm
         </Button>
       </div>
 
-      <Card>
-        <div className="mb-4">
-          <Input
-                placeholder="Tìm kiếm sản phẩm..."
-            prefix={<Search className="text-gray-400 w-4 h-4" />}
-                value={searchTerm}
-                onChange={handleSearch}
-            allowClear
-            className="max-w-md"
-          />
-        </div>
+      <Card className="mb-6">
+        <div className="flex flex-col space-y-4">
+          <div className="flex items-center space-x-4">
+            <Input
+              placeholder="Tìm kiếm sản phẩm..."
+              prefix={<Search className="text-gray-400" />}
+              value={searchTerm}
+              onChange={handleSearch}
+              className="max-w-md"
+            />
+            <Button
+              icon={showFilters ? <ChevronUp /> : <ChevronDown />}
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              {showFilters ? 'Ẩn bộ lọc' : 'Hiện bộ lọc'}
+            </Button>
+          </div>
 
-        <Table
-          columns={columns}
-          dataSource={products}
-          rowKey="id"
-          pagination={{
-            ...pagination,
-            showSizeChanger: true,
-            showTotal: (total) => `Tổng số ${total} sản phẩm`,
-          }}
-          loading={loading}
-          onChange={handleTableChange}
-          locale={{
-            emptyText: error || 'Không có dữ liệu'
-          }}
-        />
+          {showFilters && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Danh mục
+                </label>
+                <Select
+                  className="w-full"
+                  placeholder="Chọn danh mục"
+                  value={filters.category || undefined}
+                  onChange={(value) => handleFilterChange('category', value)}
+                  allowClear
+                >
+                  {categories.map(category => (
+                    <Select.Option key={category.id} value={category.id}>
+                      {category.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Thương hiệu
+                </label>
+                <Select
+                  className="w-full"
+                  placeholder="Chọn thương hiệu"
+                  value={filters.brand || undefined}
+                  onChange={(value) => handleFilterChange('brand', value)}
+                  allowClear
+                >
+                  {brands.map(brand => (
+                    <Select.Option key={brand.id} value={brand.id}>
+                      {brand.title}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Trạng thái
+                </label>
+                <Select
+                  className="w-full"
+                  placeholder="Chọn trạng thái"
+                  value={filters.status || undefined}
+                  onChange={(value) => handleFilterChange('status', value)}
+                  allowClear
+                >
+                  <Select.Option value="active">Đang hoạt động</Select.Option>
+                  <Select.Option value="inactive">Không hoạt động</Select.Option>
+                </Select>
+              </div>
+            </div>
+          )}
+        </div>
       </Card>
+
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 text-red-700 rounded">
+          {error}
+        </div>
+      )}
+
+      <Table
+        columns={columns}
+        dataSource={products}
+        rowKey="id"
+        loading={loading}
+        pagination={pagination}
+        onChange={handleTableChange}
+        rowSelection={{
+          selectedRowKeys: selectedProducts,
+          onChange: (selectedRowKeys) => setSelectedProducts(selectedRowKeys),
+        }}
+      />
     </div>
   );
 };
