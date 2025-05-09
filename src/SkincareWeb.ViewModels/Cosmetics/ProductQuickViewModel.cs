@@ -9,5 +9,6 @@
         public string ImageUrl { get; set; }
         public bool IsHot { get; set; }
         public bool IsFeature { get; set; }
+        public bool IsActive { get; set; }
     }
 }

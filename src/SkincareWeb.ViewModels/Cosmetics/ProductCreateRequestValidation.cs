@@ -27,12 +27,14 @@ namespace SkincareWeb.ViewModels.Cosmetics
                 .GreaterThan(0)
                 .WithMessage(string.Format(Messages.InvalidDetail, "Giá sản phẩm", "Giá sản phẩm lớn hơn 0"));
 
-            // Giảm giá
             RuleFor(x => x.Discount)
                 .GreaterThanOrEqualTo(0)
-                .WithMessage(string.Format(Messages.Invalid, "Giảm giá"))
-                .LessThanOrEqualTo(x => x.Price)
-                .WithMessage("Giảm giá không thể lớn hơn giá sản phẩm.");
+                .WithMessage("Giảm giá không thể nhỏ hơn 0%")
+                .LessThanOrEqualTo(100)
+                .WithMessage("Giảm giá không thể lớn hơn 100%")
+                .LessThanOrEqualTo(x => (x.Price * x.Discount / 100))
+                .WithMessage("Giảm giá không hợp lệ với giá sản phẩm.");
+
 
             // Hình ảnh sản phẩm
             RuleFor(x => x.ImageUrl)

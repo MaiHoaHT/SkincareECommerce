@@ -20,27 +20,38 @@ namespace SkincareWeb.BackendServer.Controllers
         [HttpGet]
         public async Task<IActionResult> GetProducts()
         {
-            var productQuickViewModel = await _context.Products.AsQueryable().Select(p => new ProductQuickViewModel()
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Price = p.Price,
-                Discount = p.Discount,
-                ImageUrl = p.ImageUrl,
-                IsFeature = p.IsFeature,
-                IsHot = p.IsHot,
-            }).ToListAsync();
+            var productQuickViewModel = await _context.Products
+                .AsQueryable()
+                .OrderByDescending(p => p.LastModifiedDate) // Sắp xếp theo ngày chỉnh sửa gần nhất
+                .Select(p => new ProductQuickViewModel()
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Price = p.Price,
+                    Discount = p.Discount,
+                    ImageUrl = p.ImageUrl,
+                    IsFeature = p.IsFeature,
+                    IsHot = p.IsHot,
+                    IsActive = p.IsActive
+                })
+                .ToListAsync();
+
             return Ok(productQuickViewModel);
         }
         [HttpGet("filter")]
         public async Task<IActionResult> GetProductsPaging(string filter, int pageIndex, int pageSize)
         {
             var query = _context.Products.AsQueryable();
+
             if (!string.IsNullOrEmpty(filter))
             {
                 query = query.Where(x => x.Name.Contains(filter)
                 || x.Description.Contains(filter) || x.SeoAlias.Contains(filter));
             }
+
+            // Sắp xếp theo ngày chỉnh sửa gần nhất
+            query = query.OrderByDescending(x => x.LastModifiedDate);
+
             var totalRecords = await query.CountAsync();
             var items = await query.Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize).ToListAsync();
@@ -52,6 +63,7 @@ namespace SkincareWeb.BackendServer.Controllers
                 Items = data,
                 TotalRecords = totalRecords,
             };
+
             return Ok(pagination);
         }
 
@@ -100,7 +112,8 @@ namespace SkincareWeb.BackendServer.Controllers
                 Discount = p.Discount,
                 ImageUrl = p.ImageUrl,
                 IsFeature = p.IsFeature,
-                IsHot = p.IsHot
+                IsHot = p.IsHot,
+                IsActive = p.IsActive
             }).ToListAsync();
 
             return Ok(productQuickView);
@@ -122,7 +135,8 @@ namespace SkincareWeb.BackendServer.Controllers
                 Discount = p.Discount,
                 ImageUrl = p.ImageUrl,
                 IsFeature = p.IsFeature,
-                IsHot = p.IsHot
+                IsHot = p.IsHot,
+                IsActive = p.IsActive
             }).ToListAsync();
 
             return Ok(productQuickView);
@@ -236,7 +250,8 @@ namespace SkincareWeb.BackendServer.Controllers
                     Discount = product.Discount,
                     ImageUrl = product.ImageUrl,
                     IsFeature = product.IsFeature,
-                    IsHot = product.IsHot
+                    IsHot = product.IsHot,
+                    IsActive = product.IsActive
                 };
                 return Ok(productQuickViewModel);
                 // return Ok(new { Message = $"Product with ID {id} has been deleted successfully." });
@@ -254,7 +269,8 @@ namespace SkincareWeb.BackendServer.Controllers
                 Discount = p.Discount,
                 ImageUrl = p.ImageUrl,
                 IsFeature = p.IsFeature,
-                IsHot = p.IsHot
+                IsHot = p.IsHot,
+                IsActive = p.IsActive
             };
         }
     }
