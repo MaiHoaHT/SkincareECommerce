@@ -5,7 +5,7 @@ export const oidcConfig = {
     redirect_uri: 'http://localhost:3000/callback',
     response_type: 'code',
     scope: 'openid profile api.skincare',
-    
+    silent_redirect_uri: 'http://localhost:3000/silent-refresh.html',
     // Các cài đặt bổ sung
     automaticSilentRenew: true,
     loadUserInfo: true,
