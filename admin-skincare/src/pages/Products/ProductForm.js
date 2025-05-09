@@ -157,8 +157,8 @@ const ProductForm = () => {
         status: values.isActive || true,
         isHome: values.isHome || false,
         sold: values.sold || 0,
-        createDate: id ? undefined : new Date().toISOString(),
-        lastModifiedDate: new Date().toISOString()
+        createDate: id ? undefined : new Date(new Date().getTime() + (7 * 60 * 60 * 1000)).toISOString(),
+        lastModifiedDate: new Date(new Date().getTime() + (7 * 60 * 60 * 1000)).toISOString()
       });
 
       // Log data before sending
