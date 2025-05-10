@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SkincareWeb.CustomerSite.Models;
+using SkincareWeb.CustomerSite.Service.IService;
 using System.Diagnostics;
 
 namespace SkincareWeb.CustomerSite.Controllers
@@ -7,14 +8,16 @@ namespace SkincareWeb.CustomerSite.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-
-        public HomeController(ILogger<HomeController> logger)
+        private readonly IProductService _productService;
+        public HomeController(ILogger<HomeController> logger, IProductService productService)
         {
             _logger = logger;
+            _productService = productService;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
+            var products = await _productService.GetAllProducts();
             return View();
         }
 

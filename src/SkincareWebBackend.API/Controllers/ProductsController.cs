@@ -192,8 +192,74 @@ namespace SkincareWeb.BackendServer.Controllers
 
             return Ok(productQuickView);
         }
+        // GET: api/product/hot
+        [HttpGet("hot")]
+        public async Task<IActionResult> GetProductsIsHot()
+        {
+            // Filter products by BrandId
+            var products = _context.Products.Where(x => x.IsHot == true);
 
+            // Use ProductQuickViewModel to reduce data payload sent to client
+            var productQuickView = await products.Select(p => new ProductQuickViewModel()
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Price = p.Price,
+                Discount = p.Discount,
+                ImageUrl = p.ImageUrl,
+                IsFeature = p.IsFeature,
+                IsHot = p.IsHot,
+                IsActive = p.IsActive
+            }).ToListAsync();
 
+            return Ok(productQuickView);
+        }
+
+        // GET: api/product/home
+        [HttpGet("home")]
+        public async Task<IActionResult> GetProductsIsHome()
+        {
+            // Filter products by BrandId
+            var products = _context.Products.Where(x => x.IsHome == true);
+
+            // Use ProductQuickViewModel to reduce data payload sent to client
+            var productQuickView = await products.Select(p => new ProductQuickViewModel()
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Price = p.Price,
+                Discount = p.Discount,
+                ImageUrl = p.ImageUrl,
+                IsFeature = p.IsFeature,
+                IsHot = p.IsHot,
+                IsActive = p.IsActive
+            }).ToListAsync();
+
+            return Ok(productQuickView);
+        }
+
+        // GET: api/product/home
+        [HttpGet("feature")]
+        public async Task<IActionResult> GetProductsIsFeature()
+        {
+            // Filter products by BrandId
+            var products = _context.Products.Where(x => x.IsFeature == true);
+
+            // Use ProductQuickViewModel to reduce data payload sent to client
+            var productQuickView = await products.Select(p => new ProductQuickViewModel()
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Price = p.Price,
+                Discount = p.Discount,
+                ImageUrl = p.ImageUrl,
+                IsFeature = p.IsFeature,
+                IsHot = p.IsHot,
+                IsActive = p.IsActive
+            }).ToListAsync();
+
+            return Ok(productQuickView);
+        }
         // url post: http://localhost:7261/api/products
         [HttpPost]
         public async Task<IActionResult> PostProduct([FromBody] ProductCreateRequest request)
