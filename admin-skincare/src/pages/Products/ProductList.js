@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Search, Plus, Edit, Trash2, Star, Flame, Filter, ChevronDown, ChevronUp } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Search, Plus, Edit, Trash2, Star, Flame, Filter, ChevronDown, ChevronUp, CircleCheck } from 'lucide-react';
 import { productService } from '../../services/productService';
 import { categoryService } from '../../services/categoryService';
 import { brandService } from '../../services/brandService';
@@ -13,6 +13,7 @@ import debounce from 'lodash/debounce';
 
 const ProductList = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { message } = App.useApp();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,11 +33,55 @@ const ProductList = () => {
     direction: 'asc'
   });
   const [selectedProducts, setSelectedProducts] = useState([]);
+  
+  // Validate page number and redirect if invalid
+  const validateAndRedirect = useCallback(() => {
+    const page = Number(searchParams.get('page'));
+    if (!page || page < 1) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set('page', '1');
+      setSearchParams(newParams);
+      return 1;
+    }
+    return page;
+  }, [searchParams, setSearchParams]);
+
+  // Initialize pagination from URL params
   const [pagination, setPagination] = useState({
-    current: 1,
-    pageSize: 10,
+    current: validateAndRedirect(),
+    pageSize: Number(searchParams.get('pageSize')) || 10,
     total: 0
   });
+
+  // Effect to handle URL changes and validate page
+  useEffect(() => {
+    const validPage = validateAndRedirect();
+    if (validPage !== pagination.current) {
+      setPagination(prev => ({
+        ...prev,
+        current: validPage
+      }));
+      fetchProducts();
+    }
+  }, [searchParams]);
+
+  // Update URL when pagination changes
+  const updatePagination = (newPagination) => {
+    const validPage = Math.max(1, newPagination.current);
+    const validPagination = {
+      ...newPagination,
+      current: validPage
+    };
+    
+    setPagination(validPagination);
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      newParams.set('page', validPage);
+      newParams.set('pageSize', validPagination.pageSize);
+      return newParams;
+    });
+  };
+
   const auth = useAuth();
 
   // Tạo debounced search function
@@ -179,7 +224,7 @@ const ProductList = () => {
   };
 
   const handleTableChange = (pagination, filters, sorter) => {
-    setPagination(pagination);
+    updatePagination(pagination);
     fetchProducts();
   };
 
@@ -307,6 +352,20 @@ const ProductList = () => {
       render: (price) => `${price.toLocaleString('vi-VN')}đ`,
     },
     {
+      title: 'Danh mục',
+      dataIndex: 'categoryName',
+      key: 'categoryName',
+      width: 150,
+      ellipsis: true,
+    },
+    {
+      title: 'Thương hiệu',
+      dataIndex: 'brandName',
+      key: 'brandName',
+      width: 150,
+      ellipsis: true,
+    },
+    {
       title: 'Giảm giá',
       dataIndex: 'discount',
       key: 'discount',
@@ -376,15 +435,15 @@ const ProductList = () => {
         <Button
           type="text"
           style={{
-            backgroundColor: isActive ? '#FEF3C7' : '#FFFFFF',
+            backgroundColor: isActive ? '#ECFFDCFF' : '#FFFFFF',
             borderRadius: '50%',
             padding: '4px',
             border: 'none'
           }}
           icon={
-            <Star 
+            <CircleCheck 
               style={{
-                color: isActive ? '#EAB308' : '#D1D5DB',
+                color: isActive ? '#36B301FF' : '#D1D5DB',
                 width: '16px',
                 height: '16px'
               }}

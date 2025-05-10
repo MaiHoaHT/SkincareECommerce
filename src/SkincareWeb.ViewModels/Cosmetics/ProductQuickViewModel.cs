@@ -7,8 +7,11 @@
         public decimal Price { get; set; }
         public decimal Discount { get; set; }
         public string ImageUrl { get; set; }
+        public string CategoryName { get; set; }
+        public string BrandName { get; set; }
         public bool IsHot { get; set; }
         public bool IsFeature { get; set; }
         public bool IsActive { get; set; }
+
     }
 }

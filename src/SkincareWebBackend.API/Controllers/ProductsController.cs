@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SkincareWeb.BackendServer.Helpers;
+using SkincareWeb.ViewModels;
 using SkincareWeb.ViewModels.Product;
-using SkincareWeb.ViewModels.Systems;
 using SkincareWebBackend.API.Data;
 using SkincareWebBackend.API.Data.Entities;
 
@@ -20,52 +20,103 @@ namespace SkincareWeb.BackendServer.Controllers
         [HttpGet]
         public async Task<IActionResult> GetProducts()
         {
+            //var productQuickViewModel = await _context.Products
+            //    .AsQueryable()
+            //    .OrderByDescending(p => p.LastModifiedDate) // Sắp xếp theo ngày chỉnh sửa gần nhất
+            //    .Select(p => new ProductQuickViewModel()
+            //    {
+            //        Id = p.Id,
+            //        Name = p.Name,
+            //        Price = p.Price,
+            //        Discount = p.Discount,
+            //        ImageUrl = p.ImageUrl,
+            //        IsFeature = p.IsFeature,
+            //        IsHot = p.IsHot,
+            //        IsActive = p.IsActive
+            //    })
+            //    .ToListAsync();
+
+            //return Ok(productQuickViewModel);
+            // Lấy danh mục mặc định
             var productQuickViewModel = await _context.Products
-                .AsQueryable()
-                .OrderByDescending(p => p.LastModifiedDate) // Sắp xếp theo ngày chỉnh sửa gần nhất
-                .Select(p => new ProductQuickViewModel()
+                .GroupJoin(_context.Categories,
+                    p => p.CategoryId,
+                    c => c.Id,
+                    (p, c) => new { p, c })
+                .SelectMany(x => x.c.DefaultIfEmpty(), (x, c) => new { x.p, Category = c })
+                .GroupJoin(_context.Brands,
+                    pc => pc.p.BrandId,
+                    b => b.Id,
+                    (pc, b) => new { pc.p, pc.Category, b })
+                .SelectMany(x => x.b.DefaultIfEmpty(), (x, b) => new { x.p, x.Category, Brand = b })
+                .OrderByDescending(x => x.p.Id)
+                .Select(x => new ProductQuickViewModel()
                 {
-                    Id = p.Id,
-                    Name = p.Name,
-                    Price = p.Price,
-                    Discount = p.Discount,
-                    ImageUrl = p.ImageUrl,
-                    IsFeature = p.IsFeature,
-                    IsHot = p.IsHot,
-                    IsActive = p.IsActive
+                    Id = x.p.Id,
+                    Name = x.p.Name,
+                    Price = x.p.Price,
+                    Discount = x.p.Discount,
+                    ImageUrl = x.p.ImageUrl,
+                    IsFeature = x.p.IsFeature,
+                    IsHot = x.p.IsHot,
+                    IsActive = x.p.IsActive,
+                    CategoryName = x.Category != null ? x.Category.Name : "Khác",
+                    BrandName = x.Brand != null ? x.Brand.Title : "Khác"
                 })
                 .ToListAsync();
 
+
             return Ok(productQuickViewModel);
+
         }
         [HttpGet("filter")]
-        public async Task<IActionResult> GetProductsPaging(string filter, int pageIndex, int pageSize)
+        public async Task<IActionResult> GetProductsPaging(string filter, int? categoryId, int? brandId, int pageIndex, int pageSize)
         {
-            var query = _context.Products.AsQueryable();
+            var query = from p in _context.Products
+                        join c in _context.Categories on p.CategoryId equals c.Id
+                        join b in _context.Brands on p.BrandId equals b.Id
+                        select new { p, c, b };
 
-            if (!string.IsNullOrEmpty(filter))
+            if (!string.IsNullOrWhiteSpace(filter))
             {
-                query = query.Where(x => x.Name.Contains(filter)
-                || x.Description.Contains(filter) || x.SeoAlias.Contains(filter));
+                query = query.Where(x => x.p.Name.Contains(filter.Trim()));
             }
-
-            // Sắp xếp theo ngày chỉnh sửa gần nhất
-            query = query.OrderByDescending(x => x.LastModifiedDate);
+            if (categoryId.HasValue)
+            {
+                query = query.Where(x => x.p.CategoryId == categoryId.Value);
+            }
+            if (brandId.HasValue)
+            {
+                query = query.Where(x => x.p.BrandId == brandId.Value);
+            }
 
             var totalRecords = await query.CountAsync();
             var items = await query.Skip((pageIndex - 1) * pageSize)
-                .Take(pageSize).ToListAsync();
-
-            var data = items.Select(c => CreateProductQuickViewModel(c)).ToList();
+                .Take(pageSize)
+                .Select(u => new ProductQuickViewModel()
+                {
+                    Id = u.p.Id,
+                    Price = u.p.Price,
+                    Discount = u.p.Discount,
+                    CategoryName = u.c.Name, // Lấy tên danh mục
+                    BrandName = u.b.Title,    // Lấy tên thương hiệu
+                    IsActive = u.p.IsActive,
+                    IsFeature = u.p.IsFeature,
+                    IsHot = u.p.IsHot
+                })
+                .ToListAsync();
 
             var pagination = new Pagination<ProductQuickViewModel>
             {
-                Items = data,
+                PageSize = pageSize,
+                PageIndex = pageIndex,
+                Items = items,
                 TotalRecords = totalRecords,
             };
 
             return Ok(pagination);
         }
+
 
         // url get: http://localhost:7261/api/products/1
         [HttpGet("{id}")]
@@ -195,6 +246,15 @@ namespace SkincareWeb.BackendServer.Controllers
             {
                 return NotFound(new { Message = $"Product with ID {id} not found." });
             }
+            // Lấy danh mục mặc định
+            var defaultCategory = await _context.Categories
+                .Where(c => c.Name == "Khác")
+                .FirstOrDefaultAsync();
+
+            // Lấy thương hiệu mặc định
+            var defaultBrand = await _context.Brands
+                .Where(b => b.Title == "Khác")
+                .FirstOrDefaultAsync();
 
             // Update product details
             product.Name = request.Name;
@@ -202,8 +262,14 @@ namespace SkincareWeb.BackendServer.Controllers
             product.Price = request.Price;
             product.Discount = request.Discount;
             product.ImageUrl = request.ImageUrl;
-            product.CategoryId = request.CategoryId;
-            product.BrandId = request.BrandId;
+            if (request.CategoryId == null)
+            {
+                request.CategoryId = defaultCategory.Id;
+            }
+            if (request.BrandId == null)
+            {
+                request.BrandId = defaultBrand.Id;
+            }
             product.SeoAlias = request.SeoAlias;
             product.Quantity = request.Quantity;
             product.Sold = request.Sold;

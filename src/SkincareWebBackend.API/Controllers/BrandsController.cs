@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SkincareWeb.BackendServer.Helpers;
 using SkincareWeb.BackendServer.Services;
+using SkincareWeb.ViewModels;
 using SkincareWeb.ViewModels.Cosmetics;
-using SkincareWeb.ViewModels.Systems;
 using SkincareWebBackend.API.Data;
 using SkincareWebBackend.API.Data.Entities;
 
@@ -121,19 +121,55 @@ namespace SkincareWeb.BackendServer.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteBrand(int id)
         {
-            var brand = await _context.Brands.FindAsync(id);
-            if (brand == null)
-                return NotFound(new ApiNotFoundResponse($"Brand with id: {id} is not found"));
+            //var brand = await _context.Brands.FindAsync(id);
+            //if (brand == null)
+            //    return NotFound(new ApiNotFoundResponse($"Brand with id: {id} is not found"));
 
-            _context.Brands.Remove(brand);
-            var result = await _context.SaveChangesAsync();
-            if (result > 0)
+            //_context.Brands.Remove(brand);
+            //var result = await _context.SaveChangesAsync();
+            //if (result > 0)
+            //{
+            //    await _cacheService.RemoveAsync("Brands");
+            //    BrandViewModel brandVm = CreateBrandViewModel(brand);
+            //    return Ok(brandVm);
+            //}
+            //return BadRequest();
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                await _cacheService.RemoveAsync("Brands");
-                BrandViewModel brandVm = CreateBrandViewModel(brand);
-                return Ok(brandVm);
+                try
+                {
+                    var products = _context.Products.Where(p => p.BrandId == id).ToList();
+                    _context.Products.RemoveRange(products);
+
+                    // Lưu thay đổi vào database sau khi xóa sản phẩm
+                    await _context.SaveChangesAsync();
+
+                    var brand = await _context.Brands.FindAsync(id);
+                    if (brand == null)
+                        return NotFound(new ApiNotFoundResponse($"Brand with id: {id} is not found"));
+
+                    _context.Brands.Remove(brand);
+                    var result = await _context.SaveChangesAsync();
+
+                    if (result > 0)
+                    {
+                        await transaction.CommitAsync();
+                        await _cacheService.RemoveAsync("Brands");
+                        BrandViewModel brandVm = CreateBrandViewModel(brand);
+                        return Ok(brandVm);
+                    }
+
+                    await transaction.RollbackAsync();
+                    return BadRequest();
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    // Ghi log lỗi ở đây
+                    return StatusCode(500, "An error occurred while deleting the brand and products.");
+                }
             }
-            return BadRequest();
+
         }
 
         private static BrandViewModel CreateBrandViewModel(Brand brand)

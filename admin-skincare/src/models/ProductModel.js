@@ -8,6 +8,8 @@ class ProductModel {
     this.imageUrl = data.imageUrl;
     this.categoryId = data.categoryId;
     this.brandId = data.brandId;
+    this.categoryName = data.categoryName;
+    this.brandName = data.brandName;
     this.seoAlias = data.seoAlias;
     this.quantity = data.quantity;
     this.sold = data.sold;
