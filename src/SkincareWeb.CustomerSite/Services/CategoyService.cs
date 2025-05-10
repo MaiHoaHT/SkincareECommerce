@@ -1,6 +1,7 @@
 ﻿using SkincareWeb.CustomerSite.Service.IService;
 using SkincareWeb.ViewModels.Cosmetics;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
 namespace SkincareWeb.CustomerSite.Services
 {
@@ -8,10 +9,13 @@ namespace SkincareWeb.CustomerSite.Services
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        public CategoyService(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor)
+        private readonly ILogger<CategoyService> _logger;
+
+        public CategoyService(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor, ILogger<CategoyService> logger)
         {
             _httpClientFactory = httpClientFactory;
             _httpContextAccessor = httpContextAccessor;
+            _logger = logger;
         }
 
         // Phương thức lấy HttpClient, tránh lặp lại code
@@ -34,13 +38,33 @@ namespace SkincareWeb.CustomerSite.Services
         }
         public async Task<List<CategoryViewModel>> GetAllCategories()
         {
-            var client = await GetHttpClientAsync();
-            var response = await client.GetAsync("categories");
-
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var json = await response.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<List<CategoryViewModel>>(json);
+                var client = await GetHttpClientAsync();
+                _logger.LogInformation("Calling categories API endpoint");
+                var response = await client.GetAsync("categories");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+                    _logger.LogInformation($"Received categories data: {json}");
+                    
+                    var options = new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true,
+                        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                    };
+                    
+                    return JsonSerializer.Deserialize<List<CategoryViewModel>>(json, options);
+                }
+                else
+                {
+                    _logger.LogError($"Failed to get categories. Status code: {response.StatusCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting categories");
             }
 
             return new List<CategoryViewModel>();
@@ -48,13 +72,24 @@ namespace SkincareWeb.CustomerSite.Services
 
         public async Task<CategoryViewModel> GetCategoryById(int id)
         {
-            var client = await GetHttpClientAsync();
-            var response = await client.GetAsync($"categories/{id}");
-
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var json = await response.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<CategoryViewModel>(json);
+                var client = await GetHttpClientAsync();
+                var response = await client.GetAsync($"categories/{id}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+                    return JsonSerializer.Deserialize<CategoryViewModel>(json);
+                }
+                else
+                {
+                    _logger.LogError($"Failed to get category {id}. Status code: {response.StatusCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting category {id}");
             }
 
             return null;
