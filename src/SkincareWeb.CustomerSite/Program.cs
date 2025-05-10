@@ -1,4 +1,8 @@
-﻿var builder = WebApplication.CreateBuilder(args);
+﻿using Microsoft.Extensions.DependencyInjection.Extensions;
+using SkincareWeb.CustomerSite.Service.IService;
+using SkincareWeb.CustomerSite.Services;
+
+var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 if (builder.Environment.IsDevelopment())
@@ -35,6 +39,16 @@ builder.Services.AddAuthentication(options =>
     options.SignedOutRedirectUri = "https://localhost:7086";
     options.CallbackPath = "/signin-oidc";
 });
+builder.Services.AddHttpClient("BackendApi", client =>
+{
+    client.BaseAddress = new Uri("https://localhost:7261/api/");
+});
+
+// Declare service for the API
+builder.Services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+builder.Services.AddTransient<IProductService, ProductService>();
+builder.Services.AddTransient<ICategoryService, CategoyService>();
+
 
 var app = builder.Build();
 
