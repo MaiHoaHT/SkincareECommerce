@@ -31,8 +31,8 @@ namespace SkincareWebBackend.IdentityServer
                     RequireConsent = false,
                     RequirePkce = true,
                     AllowOfflineAccess = true,
-                    RedirectUris = { "https://localhost:7261/signin-oidc" },
-                    PostLogoutRedirectUris = { "https://localhost:7261/signout-callback-oidc" },
+                    RedirectUris = { "https://localhost:7086/signin-oidc" },
+                    PostLogoutRedirectUris = ["https://localhost:7086/"],
                     AllowedScopes = new List<string>
                     {
                         IdentityServerConstants.StandardScopes.OpenId,

@@ -28,7 +28,8 @@ builder.Services.AddIdentityServer()
     .AddInMemoryClients(IdentityServerConfig.Clients)
     .AddInMemoryApiResources(IdentityServerConfig.ApiResources)
     .AddInMemoryApiScopes(IdentityServerConfig.ApiScopes)
-    .AddInMemoryIdentityResources(IdentityServerConfig.IdentityResources);
+    .AddInMemoryIdentityResources(IdentityServerConfig.IdentityResources)
+    .AddProfileService<IdentityProfileService>();
 
 // 🔹 Đăng ký `AddLocalApiAuthentication()` đúng cách
 builder.Services.AddLocalApiAuthentication();
@@ -136,6 +137,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseIdentityServer();
 app.UseAuthorization();
+app.UseStaticFiles();
 app.MapControllers();
 app.MapControllerRoute(
     name: "default",
