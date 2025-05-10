@@ -1,0 +1,9 @@
+﻿@if (User.Identity.IsAuthenticated)
+{
+    <li><a asp-controller="Account" asp-action="MyProfile" title="Thông tin cá nhân" class="flex-c-m trans-04 p-lr-25">@User.Claims.FirstOrDefault(c => c.Type == "name")?.Value</a></li>
+    <li><a asp-controller="Account" asp-action="SignOut" class="flex-c-m trans-04 p-lr-25" title="Thoát">Thoát</a></li>
+}
+else
+{
+    <a asp-controller="Account" asp-action="SignIn" class="flex-c-m trans-04 p-lr-25"> ĐĂNG NHẬP</a>
+}
