@@ -63,7 +63,8 @@ namespace SkincareWeb.BackendServer.Controllers
 					IsHot = x.p.IsHot,
 					IsActive = x.p.IsActive,
 					CategoryName = x.Category != null ? x.Category.Name : "Khác",
-					BrandName = x.Brand != null ? x.Brand.Title : "Khác"
+					BrandName = x.Brand != null ? x.Brand.Title : "Khác",
+					CategoryId = x.p.CategoryId,
 				})
 				.ToListAsync();
 
@@ -168,6 +169,7 @@ namespace SkincareWeb.BackendServer.Controllers
 				Discount = p.Discount,
 				ImageUrl = p.ImageUrl,
 				IsFeature = p.IsFeature,
+				CategoryId = p.CategoryId,
 				IsHot = p.IsHot,
 				IsActive = p.IsActive
 			}).ToListAsync();
@@ -410,7 +412,8 @@ namespace SkincareWeb.BackendServer.Controllers
 				ImageUrl = p.ImageUrl,
 				IsFeature = p.IsFeature,
 				IsHot = p.IsHot,
-				IsActive = p.IsActive
+				IsActive = p.IsActive,
+				CategoryId = p.CategoryId
 			};
 		}
 	}

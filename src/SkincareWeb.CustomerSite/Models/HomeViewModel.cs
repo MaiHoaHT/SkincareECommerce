@@ -10,6 +10,7 @@ namespace SkincareWeb.CustomerSite.Models
 		public List<ProductQuickViewModel> ProductsIsHot { get; set; } = new List<ProductQuickViewModel>();
 		public List<ProductQuickViewModel> ProductsIsHome { get; set; } = new List<ProductQuickViewModel>();
 		public List<CategoryViewModel> Categories { get; set; } = new List<CategoryViewModel>();
+		public List<BrandViewModel> Brands { get; set; } = new List<BrandViewModel>();
 
 	}
 }
