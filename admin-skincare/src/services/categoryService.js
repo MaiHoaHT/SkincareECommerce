@@ -63,7 +63,7 @@ export const categoryService = {
   // Tạo category mới
   createCategory: async (categoryData) => {
     try {
-      const response = await api.post('/api/Categories', categoryData.toJSON());
+      const response = await api.post('/api/Categories', categoryData);
       return CategoryModel.fromApi(response.data);
     } catch (error) {
       if (error.response?.data?.errors) {
@@ -77,7 +77,7 @@ export const categoryService = {
   // Cập nhật category
   updateCategory: async (id, categoryData) => {
     try {
-      const response = await api.put(`/api/Categories/${id}`, categoryData.toJSON());
+      const response = await api.put(`/api/Categories/${id}`, categoryData);
       return CategoryModel.fromApi(response.data);
     } catch (error) {
       if (error.response?.status === 404) {

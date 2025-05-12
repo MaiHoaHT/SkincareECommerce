@@ -1,0 +1,408 @@
+﻿@model ProductDetailPageViewModel
+@{
+	ViewData["Title"] = "Home";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<!-- breadcrumb -->
+<div class="container">
+	<div class="bread-crumb flex-w p-l-25 p-r-15 p-t-30 p-lr-0-lg">
+		<a href="/" class="stext-109 cl8 hov-cl1 trans-04">
+			Trang chủ
+            <i class="fa fa-angle-right m-l-9 m-r-10" aria-hidden="true"></i>
+		</a>
+		<a href="/Products" class="stext-109 cl8 hov-cl1 trans-04">
+			@if (Model.ProductCategory != null && !string.IsNullOrEmpty(Model.ProductCategory.Name))
+			{
+				@Model.ProductCategory.Name
+			}
+			else
+			{
+				<span>Danh mục</span>
+			}
+			<i class="fa fa-angle-right m-l-9 m-r-10" aria-hidden="true"></i>
+		</a>
+		<span class="stext-109 cl4">
+			@(Model.ProductDetail?.Name ?? "Sản phẩm không tồn tại")
+		</span>
+	</div>
+</div>
+
+@if (Model.ProductDetail == null)
+{
+    <div class="container">
+        <div class="alert alert-warning m-t-30">
+            <h4 class="alert-heading">Không tìm thấy sản phẩm!</h4>
+            <p>Sản phẩm bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.</p>
+            <hr>
+            <p class="mb-0">
+                <a href="/Products" class="btn btn-primary">Quay lại danh sách sản phẩm</a>
+            </p>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Product Detail -->
+    <section class="sec-product-detail bg0 p-t-65 p-b-60">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 col-lg-7 p-b-30">
+                    <div class="p-l-25 p-r-30 p-lr-0-lg">
+                        <div class="wrap-slick3 flex-sb flex-w">
+                            <div class="wrap-slick3-dots"></div>
+                            <div class="wrap-slick3-arrows flex-sb-m flex-w"></div>
+
+                            <div class="slick3 gallery-lb">
+                                @if (Model.ProductDetail.ImageUrls != null && Model.ProductDetail.ImageUrls.Any())
+                                {
+                                    @foreach (var imageUrl in Model.ProductDetail.ImageUrls)
+                                    {
+                                        <div class="item-slick3" data-thumb="@imageUrl">
+                                            <div class="wrap-pic-w pos-relative">
+                                                <img src="@imageUrl" alt="IMG-PRODUCT">
+                                                <a class="flex-c-m size-108 how-pos1 bor0 fs-16 cl10 bg0 hov-btn3 trans-04" href="@imageUrl">
+                                                    <i class="fa fa-expand"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="item-slick3" data-thumb="/images/no-image.jpg">
+                                        <div class="wrap-pic-w pos-relative">
+                                            <img src="/images/no-image.jpg" alt="No Image Available">
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-5 p-b-30">
+                    <div class="p-r-50 p-t-5 p-lr-0-lg">
+                        <h4 class="mtext-105 cl2 js-name-detail p-b-14">
+                            @Model.ProductDetail.Name
+                        </h4>
+
+                        <span class="mtext-106 cl2">
+                            @Model.ProductDetail.Price.ToString("C0", new System.Globalization.CultureInfo("vi-VN"))
+                        </span>
+
+                        <p class="stext-102 cl3 p-t-23">
+                            @Html.Raw(Model.ProductDetail.Description)
+                        </p>
+
+                        <!-- Rating -->
+                        <div class="p-t-33">
+                            <div class="flex-w flex-r-m p-b-10">
+                                <div class="size-203 flex-c-m respon6">
+                                    Đánh giá trung bình
+                                </div>
+
+                                <div class="size-204 respon6-next">
+                                    <div class="flex-w">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            if (i <= Model.AverageRating)
+                                            {
+                                                <i class="fa fa-star text-warning"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="fa fa-star-o text-warning"></i>
+                                            }
+                                        }
+                                        <span class="ml-2">(@Model.AverageRating.ToString("F1"))</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Add to cart -->
+                        <div class="p-t-33">
+                            <div class="flex-w flex-r-m p-b-10">
+                                <div class="size-204 flex-w flex-m respon6-next">
+                                    <div class="wrap-num-product flex-w m-r-20 m-tb-10">
+                                        <div class="btn-num-product-down cl8 hov-btn3 trans-04 flex-c-m">
+                                            <i class="fs-16 zmdi zmdi-minus"></i>
+                                        </div>
+
+                                        <input class="mtext-104 cl3 txt-center num-product" type="number" name="num-product" value="1">
+
+                                        <div class="btn-num-product-up cl8 hov-btn3 trans-04 flex-c-m">
+                                            <i class="fs-16 zmdi zmdi-plus"></i>
+                                        </div>
+                                    </div>
+
+                                    <button class="flex-c-m stext-101 cl0 size-101 bg1 bor1 hov-btn1 p-lr-15 trans-04 js-addcart-detail">
+                                        Thêm vào giỏ hàng
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Product info -->
+                        <div class="p-t-33">
+                            <div class="flex-w flex-r-m p-b-10">
+                                <div class="size-203 flex-c-m respon6">
+                                    Danh mục
+                                </div>
+
+                                <div class="size-204 respon6-next">
+                                    <a href="~/product/danh-muc-@Model.ProductCategory.Id" class="stext-115 cl6 hov-cl1 trans-04">
+                                        @Model.ProductCategory.Name
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="flex-w flex-r-m p-b-10">
+                                <div class="size-203 flex-c-m respon6">
+                                    Thương hiệu
+                                </div>
+
+                                <div class="size-204 respon6-next">
+                                    <a href="~/product/brand/@Model.ProductByBrand.Id" class="stext-115 cl6 hov-cl1 trans-04">
+                                        @Model.ProductByBrand.Title
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bor10 m-t-50 p-t-43 p-b-40">
+                <!-- Tab01 -->
+                <div class="tab01">
+                    <!-- Nav tabs -->
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li class="nav-item p-b-10">
+                            <a class="nav-link active" data-toggle="tab" href="#description" role="tab">Mô tả</a>
+                        </li>
+
+                        <li class="nav-item p-b-10">
+                            <a class="nav-link" data-toggle="tab" href="#reviews" role="tab">Đánh giá</a>
+                        </li>
+                    </ul>
+
+                    <!-- Tab panes -->
+                    <div class="tab-content p-t-43">
+                        <!-- - -->
+                        <div class="tab-pane fade show active" id="description" role="tabpanel">
+                            <div class="how-pos2 p-lr-15-md">
+                                <p class="stext-102 cl6">
+                                    @Html.Raw(Model.ProductDetail.Description)
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="reviews" role="tabpanel">
+                            <div class="row">
+                                <div class="col-sm-10 col-md-8 col-lg-6 m-lr-auto">
+                                    <div class="p-b-30 m-lr-15-sm">
+                                        <!-- Add review form -->
+                                        @if (User.Identity.IsAuthenticated)
+                                        {
+                                            <div class="p-b-15">
+                                                <form asp-action="AddRating" asp-route-productId="@Model.ProductDetail.Id" method="post" class="review-form">
+                                                    <input type="hidden" name="ProductId" value="@Model.ProductDetail.Id" />
+                                                    <input type="hidden" name="UserId" value="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" />
+                                                    
+                                                    <div class="form-group">
+                                                        <label>Đánh giá của bạn</label>
+                                                        <div class="star-rating">
+                                                            <input type="radio" id="star5" name="NumRate" value="5" />
+                                                            <label for="star5" title="5 sao">☆</label>
+                                                            <input type="radio" id="star4" name="NumRate" value="4" />
+                                                            <label for="star4" title="4 sao">☆</label>
+                                                            <input type="radio" id="star3" name="NumRate" value="3" />
+                                                            <label for="star3" title="3 sao">☆</label>
+                                                            <input type="radio" id="star2" name="NumRate" value="2" />
+                                                            <label for="star2" title="2 sao">☆</label>
+                                                            <input type="radio" id="star1" name="NumRate" value="1" />
+                                                            <label for="star1" title="1 sao">☆</label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="form-group">
+                                                        <label>Nhận xét</label>
+                                                        <textarea name="Context" class="form-control" rows="3" required></textarea>
+                                                    </div>
+
+                                                    <button type="submit" class="btn btn-primary">Gửi đánh giá</button>
+                                                </form>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <p>Vui lòng <asp-controller ="Account" asp-action="SignIn"> đăng nhập</asp-controller> để đánh giá sản phẩm.</p>
+                                
+                                        }
+
+                                        <!-- Reviews list -->
+                                        <div class="p-b-15">
+                                            @if (Model.Ratings != null && Model.Ratings.Any())
+                                            {
+                                                foreach (var rating in Model.Ratings.OrderByDescending(r => r.CreateDate))
+                                                {
+                                                    <div class="flex-w flex-t p-b-68">
+                                                        <div class="wrap-pic-s size-109 bor0 of-hidden m-r-18 m-t-6">
+                                                            <img src="~/images/avatar-01.jpg" alt="AVATAR">
+                                                        </div>
+
+                                                        <div class="size-207">
+                                                            <div class="flex-w flex-sb-m p-b-17">
+                                                                <span class="mtext-107 cl2 p-r-20">
+                                                                    @rating.UserId
+                                                                </span>
+
+                                                                <span class="fs-18 cl11">
+                                                                    @for (int i = 1; i <= 5; i++)
+                                                                    {
+                                                                        if (i <= rating.NumRate)
+                                                                        {
+                                                                            <i class="fa fa-star text-warning"></i>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <i class="fa fa-star-o text-warning"></i>
+                                                                        }
+                                                                    }
+                                                                </span>
+                                                            </div>
+
+                                                            <p class="stext-102 cl6">
+                                                                @rating.Context
+                                                            </p>
+
+                                                            <div class="flex-w flex-sb-m p-t-17">
+                                                                <div class="review-date">
+                                                                    @rating.CreateDate.ToString("dd/MM/yyyy HH:mm")
+                                                                </div>
+
+                                                                @if (User.Identity.IsAuthenticated && User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value == rating.UserId)
+                                                                {
+                                                                    <div>
+                                                                        <button class="btn btn-sm btn-outline-primary" onclick="editRating(@rating.Id)">Sửa</button>
+                                                                        <form asp-action="DeleteRating" asp-route-productId="@Model.ProductDetail.Id" asp-route-id="@rating.Id" method="post" style="display: inline;">
+                                                                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Bạn có chắc muốn xóa đánh giá này?')">Xóa</button>
+                                                                        </form>
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <p>Chưa có đánh giá nào cho sản phẩm này.</p>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg6 flex-c-m flex-w size-302 m-t-73 p-tb-15">
+            <span class="stext-107 cl6 p-lr-25">
+                Alias: @Model.ProductCategory?.SeoAlias
+            </span>
+
+            <span class="stext-107 cl6 p-lr-25">
+                Categories: @Model.ProductCategory?.Name
+            </span>
+        </div>
+    </section>
+
+
+    <!-- Related Products -->
+    <section class="sec-relate-product bg0 p-t-45 p-b-105">
+        <div class="container">
+            <div class="p-b-45">
+                <h3 class="ltext-106 cl5 txt-center">
+                    Sản phẩm tương tự
+                </h3>
+            </div>
+
+            <!-- Slide2 -->
+            <div class="wrap-slick2">
+                <div class="slick2">
+                    @if (Model.ProductByCategory != null && Model.ProductByCategory.Any())
+                    {
+                        @foreach (var product in Model.ProductByCategory)
+                        {
+                            <div class="item-slick2 p-l-15 p-r-15 p-t-15 p-b-15">
+                                <!-- Block2 -->
+                                <div class="block2">
+                                    <div class="block2-pic hov-img0">
+                                        <img src="@product.ImageUrls[0]" alt="IMG-PRODUCT">
+                                        <a href="~/product-detail/@product.SeoAlias-@product.Id" class="block2-btn flex-c-m stext-103 cl2 size-102 bg0 bor2 hov-btn1 p-lr-15 trans-04 js-show-modal1">
+                                            Xem ngay
+                                        </a>
+                                    </div>
+                                    <div class="block2-txt flex-w flex-t p-t-14">
+                                        <div class="block2-txt-child1 flex-col-l ">
+                                            <a href="~/product-detail/@product.SeoAlias-@product.Id" class="stext-104 cl4 hov-cl1 trans-04 js-name-b2 p-b-6">
+                                                @product.Name
+                                            </a>
+                                            <span class="stext-105 cl3">
+                                                @product.Price.ToString("C0", new System.Globalization.CultureInfo("vi-VN"))
+                                            </span>
+                                        </div>
+                                        <div class="block2-txt-child2 flex-r p-t-3">
+                                            <a href="#" class="btn-addwish-b2 dis-block pos-relative js-addwish-b2">
+                                                <img class="icon-heart1 dis-block trans-04" src="/images/icons/icon-heart-01.png" alt="ICON">
+                                                <img class="icon-heart2 dis-block trans-04 ab-t-l" src="/images/icons/icon-heart-01.png" alt="ICON">
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="col-12 text-center">
+                            <p class="stext-102 cl6">Không có sản phẩm tương tự.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+@section Scripts {
+    <script>
+        function editRating(id) {
+            // Implement edit rating functionality
+            // You can show a modal or redirect to an edit page
+        }
+
+        $(document).ready(function() {
+            // Rating stars hover effect
+            $('.star-rating label').hover(
+                function() {
+                    $(this).prevAll('label').addClass('hover');
+                },
+                function() {
+                    $(this).prevAll('label').removeClass('hover');
+                }
+            );
+
+            // Rating stars click effect
+            $('.star-rating input').change(function() {
+                var rating = $(this).val();
+                $('.star-rating label').removeClass('active');
+                $(this).next('label').addClass('active').prevAll('label').addClass('active');
+            });
+        });
+    </script>
+}

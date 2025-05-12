@@ -23,7 +23,7 @@ namespace SkincareWeb.BackendServer.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> PostCategory([FromBody] CategoryCreateRequest request)
+        public async Task<IActionResult> PostCategory([FromBody] CategoryViewModel request)
         {
             var category = new Category()
             {
@@ -58,7 +58,7 @@ namespace SkincareWeb.BackendServer.Controllers
             {
                 var categorys = await _context.Categories.ToListAsync();
 
-                var categoryVms = categorys.Select(c => CreateCategoryViewModel(c)).ToList();
+                var categoryVms = categorys.OrderByDescending(c => c.Id).Select(c => CreateCategoryViewModel(c)).ToList();
                 await _cacheService.SetAsync("Categories", categoryVms);
                 cachedData = categoryVms;
             }
@@ -119,6 +119,7 @@ namespace SkincareWeb.BackendServer.Controllers
             category.SortOrder = request.SortOrder;
             category.SeoDescription = request.SeoDescription;
             category.SeoAlias = request.SeoAlias;
+            category.Banner = request.Banner;
 
             _context.Categories.Update(category);
             var result = await _context.SaveChangesAsync();
@@ -157,6 +158,7 @@ namespace SkincareWeb.BackendServer.Controllers
             {
                 Id = category.Id,
                 Name = category.Name,
+                Banner = category.Banner,
                 SortOrder = category.SortOrder,
                 ParentId = category.ParentId,
                 SeoDescription = category.SeoDescription,

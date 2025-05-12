@@ -7,6 +7,7 @@ import { productService } from '../../services/productService';
 import { categoryService } from '../../services/categoryService';
 import { brandService } from '../../services/brandService';
 import ProductModel from '../../models/ProductModel';
+import { convertToSeoAlias } from '../../utils/stringUtils';
 import { 
   Form, 
   Input, 
@@ -67,8 +68,8 @@ const ProductForm = () => {
     accept: {
       'image/*': ['.png', '.jpg', '.jpeg', '.gif']
     },
-    maxSize: 10485760, // 10MB
-    onDrop: handleImageUpload
+    onDrop: handleImageUpload,
+    multiple: true // Cho phép upload nhiều ảnh
   });
 
   const handleEditorChange = (event, editor) => {
@@ -120,9 +121,29 @@ const ProductForm = () => {
         ...product,
         description: product.description
       });
-      if (product.imageUrl) {
-        setImages([{ id: '1', url: product.imageUrl }]);
+      
+      // Handle all product images
+      const productImages = [];
+      if (product.images && product.images.length > 0) {
+        // If product has images array
+        productImages.push(...product.images.map((img, index) => ({
+          id: `img-${index}`,
+          url: img.url
+        })));
+      } else if (product.imageUrls && product.imageUrls.length > 0) {
+        // If product has imageUrls array
+        productImages.push(...product.imageUrls.map((url, index) => ({
+          id: `img-${index}`,
+          url: url
+        })));
+      } else if (product.imageUrl) {
+        // Fallback to single imageUrl
+        productImages.push({
+          id: 'img-0',
+          url: product.imageUrl
+        });
       }
+      setImages(productImages);
     } catch (err) {
       messageApi.error('Không thể tải thông tin sản phẩm');
       console.error('Error fetching product:', err);
@@ -151,6 +172,11 @@ const ProductForm = () => {
         brandId: values.brandId,
         seoAlias: values.seoAlias,
         imageUrl: images[0]?.url || '',
+        images: images.map(img => ({
+          url: img.url,
+          isMain: images.indexOf(img) === 0 // Mark first image as main
+        })),
+        imageUrls: images.map(img => img.url),
         isFeature: values.isFeature || false,
         isHot: values.isHot || false,
         isActive: values.isActive || true,
@@ -210,7 +236,10 @@ const ProductForm = () => {
               name="name"
               rules={[{ required: true, message: 'Vui lòng nhập tên sản phẩm' }]}
             >
-              <Input />
+              <Input onChange={(e) => {
+                const seoAlias = convertToSeoAlias(e.target.value);
+                form.setFieldValue('seoAlias', seoAlias);
+              }} />
             </Form.Item>
 
             <Form.Item
@@ -238,8 +267,14 @@ const ProductForm = () => {
                     'blockQuote',
                     'insertTable',
                     'undo',
-                    'redo'
-                  ]
+                    'redo',
+                    '|',
+                    'imageUpload',
+                    'mediaEmbed'
+                  ],
+                  removePlugins: ['Title'],
+                  placeholder: 'Nhập mô tả sản phẩm...',
+                  height: '400px'
                 }}
               />
             </Form.Item>
@@ -352,7 +387,7 @@ const ProductForm = () => {
                   Kéo thả hoặc click để chọn file
                 </p>
                 <p className="text-sm text-gray-500">
-                  PNG, JPG, GIF up to 10MB
+                  PNG, JPG, GIF
                 </p>
               </div>
             </Form.Item>

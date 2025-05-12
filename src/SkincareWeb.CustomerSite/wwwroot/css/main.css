@@ -3330,3 +3330,144 @@ input.num-product::-webkit-inner-spin-button {
   }
 
 }
+
+/* Rating */
+.rating {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+}
+
+.rating input {
+    display: none;
+}
+
+.rating label {
+    cursor: pointer;
+    font-size: 30px;
+    color: #ddd;
+    padding: 5px;
+}
+
+.rating input:checked ~ label,
+.rating label:hover,
+.rating label:hover ~ label {
+    color: #ffd700;
+}
+
+/* Review list */
+.review-item {
+    border-bottom: 1px solid #e6e6e6;
+    padding: 20px 0;
+}
+
+.review-item:last-child {
+    border-bottom: none;
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.review-user {
+    font-weight: bold;
+}
+
+.review-date {
+    color: #999;
+    font-size: 0.9em;
+}
+
+.review-content {
+    margin: 10px 0;
+}
+
+.review-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Star rating */
+.star-rating {
+    color: #ffd700;
+}
+
+.star-rating .fa-star-o {
+    color: #ddd;
+}
+
+/* Review form */
+.review-form {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 5px;
+    margin-bottom: 30px;
+}
+
+.review-form textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.review-form .btn {
+    margin-top: 10px;
+}
+
+/* Rating Stars */
+.star-rating {
+    display: inline-flex;
+    flex-direction: row-reverse;
+    font-size: 1.5em;
+    justify-content: flex-end;
+}
+
+.star-rating input {
+    display: none;
+}
+
+.star-rating label {
+    color: #ddd;
+    cursor: pointer;
+    padding: 0 0.1em;
+    transition: color 0.2s ease-in-out;
+}
+
+.star-rating label:hover,
+.star-rating label:hover ~ label,
+.star-rating input:checked ~ label,
+.star-rating label.active,
+.star-rating label.hover {
+    color: #ffd700;
+}
+
+/* Review Form */
+.review-form {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.review-form .form-group {
+    margin-bottom: 15px;
+}
+
+.review-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.review-form textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    resize: vertical;
+}
+
+.review-form button {
+    margin-top: 10px;
+}

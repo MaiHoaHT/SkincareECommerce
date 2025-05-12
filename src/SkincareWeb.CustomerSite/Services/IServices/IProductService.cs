@@ -11,6 +11,6 @@ namespace SkincareWeb.CustomerSite.Service.IService
         Task<List<ProductQuickViewModel>> GetProductsIsHot();
         Task<List<ProductQuickViewModel>> GetProductIsHome();
         Task<ProductViewModel> GetProductDetails(int productId);
-
+        Task<List<ProductQuickViewModel>> SearchProducts(string searchTerm);
     }
 }

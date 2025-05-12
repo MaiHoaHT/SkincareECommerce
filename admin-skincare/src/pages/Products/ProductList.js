@@ -324,12 +324,12 @@ const ProductList = () => {
   const columns = [
     {
       title: 'Hình ảnh',
-      dataIndex: 'imageUrl',
-      key: 'imageUrl',
+      dataIndex: 'imageUrls',
+      key: 'imageUrls',
       width: 80,
-      render: (imageUrl) => (
+      render: (imageUrls) => (
         <img
-          src={imageUrl}
+          src={imageUrls && imageUrls.length > 0 ? imageUrls[0] : ''}
           alt="Product"
           className="w-12 h-12 object-cover rounded"
         />

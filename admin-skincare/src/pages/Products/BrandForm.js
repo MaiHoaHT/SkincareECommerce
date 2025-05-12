@@ -4,6 +4,7 @@ import { useDropzone } from 'react-dropzone';
 import { brandService } from '../../services/brandService';
 import { useAuth } from 'react-oidc-context';
 import { setAuthToken } from '../../services/api';
+import { convertToSeoAlias } from '../../utils/stringUtils';
 import { 
   Form, 
   Input, 
@@ -89,6 +90,14 @@ const BrandForm = () => {
     setBanner('');
   };
 
+  const handleTitleChange = (e) => {
+    const title = e.target.value;
+    form.setFieldsValue({
+      title,
+      alias: convertToSeoAlias(title)
+    });
+  };
+
   const onSubmit = async (values) => {
     if (isSubmitting) return;
     
@@ -157,7 +166,10 @@ const BrandForm = () => {
                   name="title"
                   rules={[{ required: true, message: 'Vui lòng nhập tên thương hiệu' }]}
                 >
-                  <Input placeholder="Nhập tên thương hiệu" />
+                  <Input 
+                    placeholder="Nhập tên thương hiệu" 
+                    onChange={handleTitleChange}
+                  />
                 </Form.Item>
 
                 <Form.Item
@@ -172,7 +184,14 @@ const BrandForm = () => {
                   name="alias"
                   rules={[{ required: true, message: 'Vui lòng nhập alias' }]}
                 >
-                  <Input placeholder="Nhập alias" />
+                  <Input 
+                    placeholder="Nhập alias" 
+                    onChange={(e) => {
+                      form.setFieldsValue({
+                        alias: convertToSeoAlias(e.target.value)
+                      });
+                    }}
+                  />
                 </Form.Item>
               </Col>
 

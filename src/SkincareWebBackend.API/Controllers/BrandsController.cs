@@ -54,7 +54,7 @@ namespace SkincareWeb.BackendServer.Controllers
             if (cachedData == null)
             {
                 var brands = await _context.Brands.ToListAsync();
-                var brandVms = brands.Select(b => CreateBrandViewModel(b)).ToList();
+                var brandVms = brands.OrderByDescending(b => b.Id).Select(b => CreateBrandViewModel(b)).ToList();
                 await _cacheService.SetAsync("Brands", brandVms);
                 cachedData = brandVms;
             }

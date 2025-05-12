@@ -427,7 +427,7 @@ namespace SkincareWebBackend.API.Data.Migrations
                     b.Property<decimal>("Discount")
                         .HasColumnType("decimal(10,2)");
 
-                    b.Property<string>("ImageUrl")
+                    b.PrimitiveCollection<string>("ImageUrls")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

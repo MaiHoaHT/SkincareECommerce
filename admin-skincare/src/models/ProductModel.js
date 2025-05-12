@@ -5,7 +5,8 @@ class ProductModel {
     this.description = data.description;
     this.price = data.price;
     this.discount = data.discount;
-    this.imageUrl = data.imageUrl;
+    // Handle both imageUrl and imageUrls for backward compatibility
+    this.imageUrls = data.imageUrls || (data.imageUrl ? [data.imageUrl] : []);
     this.categoryId = data.categoryId;
     this.brandId = data.brandId;
     this.categoryName = data.categoryName;
@@ -37,7 +38,8 @@ class ProductModel {
       description: this.description,
       price: this.price,
       discount: this.discount,
-      imageUrl: this.imageUrl,
+      imageUrl: this.imageUrls[0] || '', // Keep imageUrl for backward compatibility
+      imageUrls: this.imageUrls,
       categoryId: this.categoryId,
       brandId: this.brandId,
       seoAlias: this.seoAlias,

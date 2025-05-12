@@ -8,8 +8,8 @@ namespace SkincareWeb.CustomerSite.Services
 	{
 		private readonly IHttpClientFactory _httpClientFactory;
 		private readonly IHttpContextAccessor _httpContextAccessor;
-		private readonly ILogger<CategoyService> _logger;
-		public BrandService(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor, ILogger<CategoyService> logger)
+		private readonly ILogger<CategoryService> _logger;
+		public BrandService(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor, ILogger<CategoryService> logger)
 		{
 			_httpClientFactory = httpClientFactory;
 			_httpContextAccessor = httpContextAccessor;
@@ -67,9 +67,29 @@ namespace SkincareWeb.CustomerSite.Services
 			return new List<BrandViewModel>();
 		}
 
-		public Task<BrandViewModel> GetBrandById(int id)
+		public async Task<BrandViewModel> GetBrandById(int id)
 		{
-			throw new NotImplementedException();
+			try
+			{
+				var client = await GetHttpClientAsync();
+				var response = await client.GetAsync($"brand/{id}");
+
+				if (response.IsSuccessStatusCode)
+				{
+					var json = await response.Content.ReadAsStringAsync();
+					return JsonSerializer.Deserialize<BrandViewModel>(json);
+				}
+				else
+				{
+					_logger.LogError($"Failed to get brand {id}. Status code: {response.StatusCode}");
+				}
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, $"Error getting brand {id}");
+			}
+
+			return null;
 		}
 	}
 }

@@ -7,9 +7,9 @@ public class ProductService : IProductService
 {
 	private readonly IHttpClientFactory _httpClientFactory;
 	private readonly IHttpContextAccessor _httpContextAccessor;
-	private readonly ILogger<CategoyService> _logger;
+	private readonly ILogger<CategoryService> _logger;
 
-	public ProductService(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor, ILogger<CategoyService> logger)
+	public ProductService(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor, ILogger<CategoryService> logger)
 	{
 		_httpClientFactory = httpClientFactory;
 		_httpContextAccessor = httpContextAccessor;
@@ -71,13 +71,38 @@ public class ProductService : IProductService
 
 	public async Task<ProductViewModel> GetProductDetails(int productId)
 	{
-		var client = _httpClientFactory.CreateClient("BackendApi");
-		var response = await client.GetAsync($"products/{productId}");
-
-		if (response.IsSuccessStatusCode)
+		try
 		{
-			var json = await response.Content.ReadAsStringAsync();
-			return JsonSerializer.Deserialize<ProductViewModel>(json);
+			var client = await GetHttpClientAsync();
+			_logger.LogInformation($"Calling Product API endpoint for product {productId}");
+			var response = await client.GetAsync($"products/{productId}");
+
+			if (response.IsSuccessStatusCode)
+			{
+				var json = await response.Content.ReadAsStringAsync();
+				_logger.LogInformation($"Received product detail data: {json}");
+
+				var options = new JsonSerializerOptions
+				{
+					PropertyNameCaseInsensitive = true,
+					Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+				};
+
+				var product = JsonSerializer.Deserialize<ProductViewModel>(json, options);
+				if (product == null)
+				{
+					_logger.LogWarning($"Product {productId} not found or invalid data format");
+				}
+				return product;
+			}
+			else
+			{
+				_logger.LogError($"Failed to get product {productId}. Status code: {response.StatusCode}");
+			}
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, $"Error getting product {productId}");
 		}
 
 		return null;
@@ -85,13 +110,39 @@ public class ProductService : IProductService
 
 	public async Task<List<ProductQuickViewModel>> GetProductsByCategoryId(int categoryId)
 	{
-		var client = _httpClientFactory.CreateClient("BackendApi");
-		var response = await client.GetAsync($"products/category/{categoryId}");
-
-		if (response.IsSuccessStatusCode)
+		try
 		{
-			var json = await response.Content.ReadAsStringAsync();
-			return JsonSerializer.Deserialize<List<ProductQuickViewModel>>(json);
+			var client = await GetHttpClientAsync();
+			_logger.LogInformation($"Calling Product API endpoint for category {categoryId}");
+			var response = await client.GetAsync($"products/category/{categoryId}");
+
+			if (response.IsSuccessStatusCode)
+			{
+				var json = await response.Content.ReadAsStringAsync();
+				_logger.LogInformation($"Received products by category data: {json}");
+
+				var options = new JsonSerializerOptions
+				{
+					PropertyNameCaseInsensitive = true,
+					Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+				};
+
+				var products = JsonSerializer.Deserialize<List<ProductQuickViewModel>>(json, options);
+				if (products == null)
+				{
+					_logger.LogWarning($"No products found for category {categoryId}");
+					return new List<ProductQuickViewModel>();
+				}
+				return products;
+			}
+			else
+			{
+				_logger.LogError($"Failed to get products for category {categoryId}. Status code: {response.StatusCode}");
+			}
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, $"Error getting products for category {categoryId}");
 		}
 
 		return new List<ProductQuickViewModel>();
@@ -127,26 +178,78 @@ public class ProductService : IProductService
 	}
 	public async Task<List<ProductQuickViewModel>> GetProductsIsFeature()
 	{
-		var client = _httpClientFactory.CreateClient("BackendApi");
-		var response = await client.GetAsync("products/feature");
-
-		if (response.IsSuccessStatusCode)
+		try
 		{
-			var json = await response.Content.ReadAsStringAsync();
-			return JsonSerializer.Deserialize<List<ProductQuickViewModel>>(json);
+			var client = await GetHttpClientAsync();
+			_logger.LogInformation("Calling Product API endpoint for featured products");
+			var response = await client.GetAsync("products/feature");
+
+			if (response.IsSuccessStatusCode)
+			{
+				var json = await response.Content.ReadAsStringAsync();
+				_logger.LogInformation($"Received featured products data: {json}");
+
+				var options = new JsonSerializerOptions
+				{
+					PropertyNameCaseInsensitive = true,
+					Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+				};
+
+				var products = JsonSerializer.Deserialize<List<ProductQuickViewModel>>(json, options);
+				if (products == null)
+				{
+					_logger.LogWarning("No featured products found");
+					return new List<ProductQuickViewModel>();
+				}
+				return products;
+			}
+			else
+			{
+				_logger.LogError($"Failed to get featured products. Status code: {response.StatusCode}");
+			}
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error getting featured products");
 		}
 
 		return new List<ProductQuickViewModel>();
 	}
 	public async Task<List<ProductQuickViewModel>> GetProductsIsHot()
 	{
-		var client = _httpClientFactory.CreateClient("BackendApi");
-		var response = await client.GetAsync("products/hot");
-
-		if (response.IsSuccessStatusCode)
+		try
 		{
-			var json = await response.Content.ReadAsStringAsync();
-			return JsonSerializer.Deserialize<List<ProductQuickViewModel>>(json);
+			var client = await GetHttpClientAsync();
+			_logger.LogInformation("Calling Product API endpoint for hot products");
+			var response = await client.GetAsync("products/hot");
+
+			if (response.IsSuccessStatusCode)
+			{
+				var json = await response.Content.ReadAsStringAsync();
+				_logger.LogInformation($"Received hot products data: {json}");
+
+				var options = new JsonSerializerOptions
+				{
+					PropertyNameCaseInsensitive = true,
+					Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+				};
+
+				var products = JsonSerializer.Deserialize<List<ProductQuickViewModel>>(json, options);
+				if (products == null)
+				{
+					_logger.LogWarning("No hot products found");
+					return new List<ProductQuickViewModel>();
+				}
+				return products;
+			}
+			else
+			{
+				_logger.LogError($"Failed to get hot products. Status code: {response.StatusCode}");
+			}
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error getting hot products");
 		}
 
 		return new List<ProductQuickViewModel>();
@@ -160,6 +263,41 @@ public class ProductService : IProductService
 		{
 			var json = await response.Content.ReadAsStringAsync();
 			return JsonSerializer.Deserialize<List<ProductQuickViewModel>>(json);
+		}
+
+		return new List<ProductQuickViewModel>();
+	}
+
+	public async Task<List<ProductQuickViewModel>> SearchProducts(string searchTerm)
+	{
+		try
+		{
+			var client = await GetHttpClientAsync();
+			_logger.LogInformation($"Searching products with term: {searchTerm}");
+			var response = await client.GetAsync($"products/search?searchTerm={Uri.EscapeDataString(searchTerm)}");
+
+			if (response.IsSuccessStatusCode)
+			{
+				var json = await response.Content.ReadAsStringAsync();
+				_logger.LogInformation($"Received search results: {json}");
+
+				var options = new JsonSerializerOptions
+				{
+					PropertyNameCaseInsensitive = true,
+					Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+				};
+
+				var products = JsonSerializer.Deserialize<List<ProductQuickViewModel>>(json, options);
+				return products ?? new List<ProductQuickViewModel>();
+			}
+			else
+			{
+				_logger.LogError($"Failed to search products. Status code: {response.StatusCode}");
+			}
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error searching products");
 		}
 
 		return new List<ProductQuickViewModel>();
